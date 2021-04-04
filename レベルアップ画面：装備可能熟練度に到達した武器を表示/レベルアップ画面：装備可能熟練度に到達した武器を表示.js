@@ -80,7 +80,7 @@ ExperienceParameterWindow.drawWindowContent = function(x, y) {
 	}
 
 	//itemlistに格納されているものをすべて呼び出し
-	for (i = 0; i < this._itemcount; i++) {
+	for (var i = 0; i < this._itemcount; i++) {
 		var item = this._itemlist[i];
 
 		GraphicsRenderer.drawImage(x + 200, y + 8 + i * 30, item.getIconResourceHandle(), GraphicsType.ICON);
