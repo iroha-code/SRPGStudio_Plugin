@@ -37,11 +37,11 @@ ExperienceParameterWindow.setExperienceParameterData= function(targetUnit, growt
 		var itemwlv = -1;
 
 		if (item !== null) {
-			if (item.isWeapon() == true) {
+			if (item.isWeapon() == true && ItemControl.isWeaponAvailable2(targetUnit, item)) {
 				//武器の装備可能熟練度を取得
 				itemwlv = item.getWeaponLevel();
 			}
-			if (item.isWand() == true) {
+			if (item.isWand() == true && ItemControl.isItemUsable2(targetUnit, item)) {
 				if ("getWandLevel" in ItemControl) {
 					//杖の使用可能熟練度を取得
 					itemwlv = ItemControl.getWandLevel(item);
@@ -56,7 +56,6 @@ ExperienceParameterWindow.setExperienceParameterData= function(targetUnit, growt
 	}
 
 };
-
 
 var alias2 = ExperienceParameterWindow.drawWindowContent;
 ExperienceParameterWindow.drawWindowContent = function(x, y) {
@@ -88,5 +87,88 @@ ExperienceParameterWindow.drawWindowContent = function(x, y) {
 	}
 
 };
+
+//「熟練度」の項目のみ考慮対象から外す
+ItemControl.isWeaponAvailable2 = function(unit, item) {
+	if (item === null) {
+		return false;
+	}
+	
+	// itemが武器でない場合は装備できない
+	if (!item.isWeapon()) {
+		return false;
+	}
+	
+	// 「戦士系」などが一致するか調べる
+	if (!this._compareTemplateAndCategory(unit, item)) {
+		return false;
+	}
+	
+	// クラスの「装備可能武器」のリストに入っているか調べる
+	if (!this.isWeaponTypeAllowed(unit.getClass().getEquipmentWeaponTypeReferenceList(), item)) {
+		return false;
+	}
+	
+	// 「専用データ」を調べる
+	if (!this.isOnlyData(unit, item)) {
+		return false;
+	}
+	
+	if (item.getWeaponCategoryType() === WeaponCategoryType.MAGIC) {
+		// 「魔法攻撃」が禁止されているか調べる
+		if (StateControl.isBadStateFlag(unit, BadStateFlag.MAGIC)) {
+			return false;
+		}
+	}
+	else {
+		// 「物理攻撃」が禁止されているか調べる
+		if (StateControl.isBadStateFlag(unit, BadStateFlag.PHYSICS)) {
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+//「熟練度」の項目のみ考慮対象から外す
+ItemControl.isItemUsable2 = function(unit, item) {
+	// 武器は使用できない
+	if (item.isWeapon()) {
+		return false;
+	}
+	
+	// アイテムの使用が禁止されているか調べる
+	if (StateControl.isBadStateFlag(unit, BadStateFlag.ITEM)) {
+		return false;
+	}
+		
+	if (item.isWand()) {
+		// アイテムが杖の場合は、クラスが杖を使用できなければならない
+		if (!(unit.getClass().getClassOption() & ClassOptionFlag.WAND)) {
+			return false;
+		}
+		
+		// 杖の使用が禁止されているか調べる
+		if (StateControl.isBadStateFlag(unit, BadStateFlag.WAND)) {
+			return false;
+		}
+	}
+	
+	if (item.getItemType() === ItemType.KEY) {
+		if (item.getKeyInfo().isAdvancedKey()) {
+			// 「専用鍵」の場合は、クラスが鍵を使用できなければならない
+			if (!(unit.getClass().getClassOption() & ClassOptionFlag.KEY)) {
+				return false;
+			}
+		}
+	}
+	
+	// 「専用データ」を調べる
+	if (!this.isOnlyData(unit, item)) {
+		return false;
+	}
+	
+	return true;
+}
 
 })();
