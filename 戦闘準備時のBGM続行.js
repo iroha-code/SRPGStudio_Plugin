@@ -29,11 +29,7 @@
 		// イベント内でシーン変更やマップクリアが発生していない場合のみ、SceneType.FREEを実行する
 		if (root.getCurrentScene() === SceneType.BATTLESETUP) {
 			var mapInfo = root.getCurrentSession().getCurrentMapInfo();
-			if ('musiccontinue' in mapInfo.custom) {
-				if (mapInfo.custom.musiccontinue !== true) {
-					MediaControl.clearMusicCache();
-				}
-			} else {
+			if (mapInfo.custom.musiccontinue !== true) {
 				MediaControl.clearMusicCache();
 			}
 		root.changeScene(SceneType.FREE);
