@@ -46,7 +46,7 @@ AttackChecker.getAttackIndexArray = function(unit, weapon, isSingleCheck) {
 				var Hp = targetUnit.getHp();
 
 				if (weapon !== null) {
-					if (weapon.custom.MaxHPblock == null) {
+					if (weapon.custom.MaxHPblock == undefined) {
 						indexArrayNew.push(index);
 						if (isSingleCheck) {
 							return indexArrayNew;
