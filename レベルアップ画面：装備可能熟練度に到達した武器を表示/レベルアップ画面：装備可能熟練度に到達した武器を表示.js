@@ -47,7 +47,9 @@ ExperienceParameterWindow.setExperienceParameterData= function(targetUnit, growt
 					itemwlv = ItemControl.getWandLevel(item);
 				}
 			}
-			if (ParamBonus.getWlv(targetUnit) < itemwlv && ParamBonus.getWlv(targetUnit) + growthArray[9] >= itemwlv) {
+			//wlvのindex
+			wlvnum = ParamGroup.getParameterIndexFromType(ParamType.WLV);
+			if (ParamBonus.getWlv(targetUnit) < itemwlv && ParamBonus.getWlv(targetUnit) + growthArray[wlvnum] >= itemwlv) {
 				//レベルアップ前の熟練度は装備可能熟練度未満，レベルアップ後の熟練度は装備可能熟練度以上の場合
 				this._itemlist.push(item);
 			}
