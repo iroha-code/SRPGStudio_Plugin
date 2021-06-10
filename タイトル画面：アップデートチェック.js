@@ -34,14 +34,13 @@
   ・商用・非商用問いません。フリーです。
   ・加工等、問題ありません。どんどん改造してください。
   ・クレジット明記無し　OK
-  ・再配布、転載　OK
   ・SRPG Studio利用規約は遵守してください。
   
 --------------------------------------------------------------------------*/
 //-------------------------------------------
 // 設定
 //-------------------------------------------
-var UpdateTextURL = 'https://drive.google.com/uc?export=download&id=1DsTHTPg1Xcpy2EEo6Hd_M4jp0NgUhn87';
+var UpdateTextURL = 'https://drive.google.com/uc?export=download&id=XXXXXXXXXXXXXXXXXXXXXXXXXX';
 var CurrentGameVersion = '1.1';
 //-------------------------------------------
 
