@@ -37,8 +37,14 @@
 //コメントを表示するフレーム数を設定
 var IrohaPlugin_CharacterComment_AppearanceTime = 120;
 
+//フェード処理を行うフレーム数を設定
+var IrohaPlugin_CharacterComment_FadeTime = 6;
+
 //枠の長さを設定
 var IrohaPlugin_CharacterComment_WindowWidth = 480;
+
+//表示するY座標を設定
+var IrohaPlugin_CharacterComment_Y = 20;
 
 //----------------------------
 // 以下，本処理
@@ -74,16 +80,16 @@ var IrohaPlugin = {
 		var textui = this._getWindowTextUI();
 		var pic = textui.getUIImage();
 		var time = IrohaPlugin_CharacterComment_AppearanceTime;
-		var fadetime = 6
+		var fadetime = IrohaPlugin_CharacterComment_FadeTime;
 		var alpha = 255;
 
 		if ((time - this._cyclecounter) < fadetime) {
-			x = x + (this._cyclecounter - time + fadetime) * 40;
-			alpha = alpha - (this._cyclecounter - time + fadetime) * 40;
+			x = x + (this._cyclecounter - time + fadetime) * (width / fadetime);
+//			alpha = alpha - (this._cyclecounter - time + fadetime) * (255 / fadetime);
 		}
 		if (this._cyclecounter < fadetime) {
-			x = x + (fadetime - this._cyclecounter) * 40;
-			alpha = alpha - (fadetime - this._cyclecounter) * 40;
+			x = x + (fadetime - this._cyclecounter) * (width / fadetime);
+//			alpha = alpha - (fadetime - this._cyclecounter) * (255 / fadetime);
 		}
 		WindowRenderer.drawStretchWindow(x, y, width, height, pic);
 		
@@ -119,8 +125,7 @@ var IrohaPlugin = {
 	},
 	
 	_getPositionY: function() {
-		var yBase = LayoutControl.getRelativeY(10) - 28;
-		return yBase;
+		return IrohaPlugin_CharacterComment_Y;
 	},
 	
 	_getWindowXPadding: function() {
