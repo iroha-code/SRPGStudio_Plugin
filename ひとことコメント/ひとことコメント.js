@@ -2,13 +2,47 @@
   
 　ひとことコメント.js
 
+　■概要
+  画面右側からひとことコメントを出します。
+  ユニットの顔画像 / NPCの顔画像 / アイコン　のいずれかとセットで出すことができます。
+
   ■使用方法
+  詳しい設定方法は同梱の画像をご覧ください。
+
+  ① ユニットの顔画像＋テキスト を出したい場合
   イベントコマンドの「スクリプトの実行」から「コード実行」を選択し，以下のように記述してください。
   ------------
   var text = '表示させたい文言'
-  IrohaPlugin._execute(text);
+  IrohaPlugin._execute('unit', text);
   ------------
 　さらに，「オリジナルデータ」タブで，発言者になるユニットを設定してください。
+  
+  ② NPCの顔画像＋テキスト を出したい場合
+  イベントコマンドの「スクリプトの実行」から「コード実行」を選択し，以下のように記述してください。
+  ------------
+  var text = '表示させたい文言'
+  IrohaPlugin._execute('npc', text);
+  ------------
+　さらに，「オリジナルデータ」タブの「数値1」をNPCリスト番号に，「数値2」をNPCリストIDに設定してください。
+
+  ③ アイコン＋テキスト を出したい場合
+  イベントコマンドの「スクリプトの実行」から「コード実行」を選択し，以下のように記述してください。
+  ------------
+  var text = '表示させたい文言'
+  IrohaPlugin._execute('icon', text);
+  ------------
+　さらに，「オリジナルデータ」タブを以下のように設定してください。
+  「数値1」：ランタイムデータを使うなら1，オリジナルデータを使うなら0
+  「数値2」：アイコンのid
+  「数値3」：アイコンのx座標（左から0，1，2，…でカウント）
+  「数値4」：アイコンのy座標（上から0，1，2，…でカウント）
+
+  ③ テキストのみ を出したい場合
+  イベントコマンドの「スクリプトの実行」から「コード実行」を選択し，以下のように記述してください。
+  ------------
+  var text = '表示させたい文言'
+  IrohaPlugin._execute('text', text);
+  ------------
 
   ■注意事項
   ・すでに他のスクリプトで「ContentRenderer.drawUnitPartFace」（QBU氏作成）が使用されている場合は，
@@ -17,6 +51,7 @@
 
   ■バージョン履歴
   2021/06/15  新規作成
+  2021/06/16　NPC，アイコン，テキストのみを表示できるようにアップデート
 
 　■対応バージョン
 　SRPG Studio Version:1.234
@@ -50,14 +85,30 @@ var IrohaPlugin_CharacterComment_Y = 20;
 // 以下，本処理
 //----------------------------
 var IrohaPlugin = {
+	_type: null,
 	_cyclecounter: 0,
 	_unit: null,
 	_text:'',
+	_handle: null,
 
-	_execute: function(text) {
+	_execute: function(type, text) {
 		this._cyclecounter = IrohaPlugin_CharacterComment_AppearanceTime;
-		this._unit = root.getEventCommandObject().getOriginalContent().getUnit();
+		this._type = type;
 		this._text = text;
+
+		if (type == 'unit') {
+			this._unit = root.getEventCommandObject().getOriginalContent().getUnit();
+		} else if (type == 'npc') {
+			var listid = root.getEventCommandObject().getOriginalContent().getValue(0) + 1;
+			var dataid = root.getEventCommandObject().getOriginalContent().getValue(1);
+			this._unit = root.getBaseData().getNpcList(listid).getData(dataid);
+		} else if (type == 'icon') {
+			var isRuntime = root.getEventCommandObject().getOriginalContent().getValue(0);
+			var id = root.getEventCommandObject().getOriginalContent().getValue(1);
+			var xSrc = root.getEventCommandObject().getOriginalContent().getValue(2);
+			var ySrc = root.getEventCommandObject().getOriginalContent().getValue(3);
+			this._handle = root.createResourceHandle(isRuntime, id, 0, xSrc, ySrc);
+		}
 	},
 
 	_cyclechecker: function() {
@@ -108,12 +159,20 @@ var IrohaPlugin = {
 		var text = this._text;
 		var isReverse = false;
 
-		var dx = GraphicsFormat.FACE_WIDTH + 24;
+		var dx = 0;
 		var dy = -7;
-		TextRenderer.drawAlphaText(x + dx, y + dy, text, length, color, alpha, font);
 
-		y -= 13;
-		ContentRenderer.drawUnitPartFace(x, y, unit, isReverse, alpha);
+		if (this._type == 'unit' || this._type == 'npc') {
+			dx = GraphicsFormat.FACE_WIDTH + 24;
+			var tmpy = -13;
+			ContentRenderer.drawUnitPartFace(x, y + tmpy, unit, isReverse, alpha);
+		}
+		if (this._type == 'icon') {
+			dx = GraphicsFormat.ICON_WIDTH + 5;
+			var tmpy = -12;
+			GraphicsRenderer.drawImage(x, y + tmpy, this._handle, GraphicsType.ICON);
+		}
+		TextRenderer.drawAlphaText(x + dx, y + dy, text, length, color, alpha, font);
 	},
 	
 	_getTextLength: function() {
