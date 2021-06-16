@@ -101,7 +101,7 @@ var IrohaPlugin = {
 		} else if (type == 'npc') {
 			var listid = root.getEventCommandObject().getOriginalContent().getValue(0) + 1;
 			var dataid = root.getEventCommandObject().getOriginalContent().getValue(1);
-			this._unit = root.getBaseData().getNpcList(listid).getData(dataid);
+			this._unit = root.getBaseData().getNpcList(listid).getDataFromId(dataid);
 		} else if (type == 'icon') {
 			var isRuntime = root.getEventCommandObject().getOriginalContent().getValue(0);
 			var id = root.getEventCommandObject().getOriginalContent().getValue(1);
