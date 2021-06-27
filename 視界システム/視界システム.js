@@ -19,7 +19,11 @@
   ※たとえばViewLength:5とすると，自分から5マス離れたところまでが視界となります。
 　
   ② 敵ユニットの行動パターンで，移動型（or 待機型）の条件を以下のようにする
-　　root.getCurrentSession().getActiveEventUnit().custom.isMoveMode;
+　　if (root.getBaseScene() == SceneType.BATTLESETUP) {
+		false;
+	} else {
+		root.getCurrentSession().getActiveEventUnit().custom.isMoveMode;
+	}
 　※条件を満たさないときは行動型になるようにすればOK
 　※同梱の「設定：行動パターン.png」をご覧ください。
 
