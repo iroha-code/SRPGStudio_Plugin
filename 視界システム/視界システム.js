@@ -19,11 +19,7 @@
   ※たとえばViewLength:5とすると，自分から5マス離れたところまでが視界となります。
 　
   ② 敵ユニットの行動パターンで，移動型（or 待機型）の条件を以下のようにする
-　　if (root.getBaseScene() == SceneType.BATTLESETUP) {
-		false;
-	} else {
-		root.getCurrentSession().getActiveEventUnit().custom.isMoveMode;
-	}
+　　IrohaPlugin_GetisMoveMode.getisMoveMode();
 　※条件を満たさないときは行動型になるようにすればOK
 　※同梱の「設定：行動パターン.png」をご覧ください。
 
@@ -32,6 +28,7 @@
 
   ■バージョン履歴
   2021/06/27  新規作成
+  2021/06/28　MarkingPanelの処理でも視界外が暗くなるように修正
 
 　■対応バージョン
 　SRPG Studio Version:1.234
@@ -47,6 +44,44 @@
 --------------------------------------------------------------------------*/
 
 (function() {
+
+//--------------------------------------------------
+// MarkingPanel（右クリックのとき）の処理
+//--------------------------------------------------
+MarkingPanel._indexArrayView = null;
+MarkingPanel._Viewsimulator = null;
+
+var alias21 = MarkingPanel.drawMarkingPanel;
+MarkingPanel.drawMarkingPanel = function() {
+	alias21.call(this);
+
+	if (!this.isMarkingEnabled()) {
+		return;
+	}
+	if (!root.isSystemSettings(SystemSettingsType.MARKING)) {
+		return;
+	}
+	root.drawFadeLight(this._indexArrayView, 000000, this._getAlpha());
+}
+
+var alias22 = MarkingPanel.updateMarkingPanel;
+MarkingPanel.updateMarkingPanel = function() {
+	alias22.call(this);
+
+	if (!this.isMarkingEnabled()) {
+		return;
+	}
+	this._indexArrayView = IrohaPlugin_GetisMoveMode.AllMarkingPanelSetup();
+}
+
+var alias23 = MarkingPanel.updateMarkingPanelFromUnit;
+MarkingPanel.updateMarkingPanelFromUnit = function(unit) {
+	alias23.call(this, unit);
+	if (!this.isMarkingEnabled()) {
+		return;
+	}
+	this._indexArrayView = IrohaPlugin_GetisMoveMode.AllMarkingPanelSetup();
+}
 
 //--------------------------------------------------
 // 敵にカーソルを乗せたとき，視界外を暗闇にする処理
@@ -316,6 +351,39 @@ IrohaPlugin_GetisMoveMode = {
 		return outputarray;
 	},
 
+	AllMarkingPanelSetup: function() {
+		var temparray = [];
+		var outputarray = [];
+		this._array = [];
+		this._simulator = root.getCurrentSession().createMapSimulator();
+
+		this._enemyList = EnemyList.getAliveList();
+		for (var i = 0; i < this._enemyList.getCount(); i++) {
+			var unit = this._enemyList.getData(i);
+			this.preparedata(unit);
+
+			temparray = this._array.concat(temparray);
+		}
+		outputarray = this.ReverseArray(temparray);
+
+		return outputarray;
+	},
+
+	//視界を反転して暗闇になるindexを割出す
+	ReverseArray: function(array) {
+		outputarray = [];
+		var hash = makeHashList(array);
+
+		var mapwidth = root.getCurrentSession().getCurrentMapInfo().getMapWidth();
+		var mapheight = root.getCurrentSession().getCurrentMapInfo().getMapHeight();
+		for (var i = 0; i < mapwidth * mapheight; i++) {
+			if (hashSearch(hash, i) == -1) { 
+				outputarray.push(i);
+			}
+		}
+		return outputarray;
+	},
+
 	preparedata: function(unit) {
 		var attackRange = UnitRangePanel.getUnitAttackRange(unit);
 		if (attackRange.endRange !== 0) {
@@ -367,5 +435,56 @@ IrohaPlugin_GetisMoveMode = {
 			}
 		}
 		return result;
+	}, 
+
+	getisMoveMode: function() {
+		if (root.getBaseScene() == SceneType.BATTLESETUP) {
+			return false;
+		} else {
+			return root.getCurrentSession().getActiveEventUnit().custom.isMoveMode;
+		}
 	}
 }
+
+makeHashList = function (list) {
+	var hashList = list.reduce(function(directory, value, index) {
+	  directory[value] = (directory[value] || []).concat(index);
+	  return directory;
+	}, {});
+	return hashList;
+}
+hashSearch = function (list, num) {
+	var index = -1;
+	if(num in list) {
+	  index = list[num];
+	}
+	return index;
+}
+
+Array.prototype.reduce = function(callback /*, initialValue*/) {
+    'use strict';
+    if (this == null) {
+      throw new TypeError('Array.prototype.reduce called on null or undefined');
+    }
+    if (typeof callback !== 'function') {
+      throw new TypeError(callback + ' is not a function');
+    }
+    var t = Object(this), len = t.length >>> 0, k = 0, value;
+    if (arguments.length == 2) {
+      value = arguments[1];
+    } else {
+      while (k < len && !(k in t)) {
+        k++; 
+      }
+      if (k >= len) {
+        throw new TypeError('Reduce of empty array with no initial value');
+      }
+      value = t[k++];
+    }
+    for (; k < len; k++) {
+      if (k in t) {
+        value = callback(value, t[k], k, t);
+      }
+    }
+    return value;
+};
