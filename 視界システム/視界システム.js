@@ -44,9 +44,51 @@
 --------------------------------------------------------------------------*/
 
 (function() {
+//--------------------------------------------------
+// 自軍ターン時，何も選択していないときに吹き出しを表示する
+//--------------------------------------------------
+var alias31 = MapEdit.clearRange;
+MapEdit.clearRange = function() {
+	alias31.call(this);
+
+	MapSequenceArea._inprocess = false;
+	IrohaPlugin_GetisMoveMode.enemyturnSetup();
+}
+
+var alias32 = MapEdit._completeMemberData;
+MapEdit._completeMemberData = function() {
+	alias32.call(this);
+
+	MapSequenceArea._inprocess = false;
+	IrohaPlugin_GetisMoveMode.enemyturnSetup();
+}
+
+var alias33 = MapPartsCollection._configureMapParts;
+MapPartsCollection._configureMapParts = function(groupArray) {
+	groupArray.appendObject(MapParts.Fukidashi);
+	alias33.call(this, groupArray);
+}
+
+MapParts.Fukidashi = defineObject(BaseMapParts,
+{
+	drawMapParts: function() {
+		var enemyList = EnemyList.getAliveList();
+		for (var i = 0; i < enemyList.getCount(); i++) {
+			var unit = enemyList.getData(i);
+
+			if (unit.custom.isMoveMode === false) {
+				var picx = LayoutControl.getPixelX(unit.getMapX());
+				var picy = LayoutControl.getPixelY(unit.getMapY());
+	
+				var pic = CacheControl.get_FukidashiPic();
+				pic.draw(picx + 12, picy - 12);
+			}
+		}
+	}
+});
 
 //--------------------------------------------------
-// MarkingPanel（右クリックのとき）の処理
+// MarkingPanel（右クリックのとき）：敵全体の視界外を暗くする
 //--------------------------------------------------
 MarkingPanel._indexArrayView = null;
 MarkingPanel._Viewsimulator = null;
@@ -142,8 +184,8 @@ MapChipLight.drawLight = function() {
 //--------------------------------------------------
 // 味方ユニットの移動先選択時，敵ユニットの視界内に入ったら「！」の吹出しを表示
 //--------------------------------------------------
-MapSequenceArea._fukidashiPic = null;
 MapSequenceArea._fukidashiSimulator = null;
+MapSequenceArea._inprocess = null;
 
 //以下，視界中に味方ユニットがいる敵に吹き出しを出す処理
 var alias01 = MapSequenceArea._prepareSequenceMemberData;
@@ -157,6 +199,7 @@ var alias02 = MapSequenceArea._completeSequenceMemberData;
 MapSequenceArea._completeSequenceMemberData = function(parentTurnObject) {
 	alias02.call(this, parentTurnObject);
 
+	this._inprocess = true;
 	var currentMapCursorX = this._mapCursor.getX();
 	var currentMapCursorY = this._mapCursor.getY();
 	IrohaPlugin_GetisMoveMode.fukidashiturnSetup(currentMapCursorX, currentMapCursorY, 0);
@@ -216,17 +259,17 @@ EnemyTurn._completeTurnMemberData = function() {
 CacheControl._FukidashiPic = null;
 
 CacheControl.get_FukidashiPic = function() {
-    var pic;
+	var pic;
 
-    if (!this._FukidashiPic) {
-      pic = root.getMaterialManager().createImage('Fukidashi', 'Fukidashi.png');
-      this._FukidashiPic = this._createImageCache(pic);
-    } else if (!this._FukidashiPic.picCache.isCacheAvailable()) {
-      pic = root.getMaterialManager().createImage('Fukidashi', 'Fukidashi.png');
-      this._setImageCache(pic, this._FukidashiPic.picCache);		
-    }
+	if (!this._FukidashiPic) {
+		pic = root.getMaterialManager().createImage('Fukidashi', 'Fukidashi.png');
+		this._FukidashiPic = this._createImageCache(pic);
+	} else if (!this._FukidashiPic.picCache.isCacheAvailable()) {
+		pic = root.getMaterialManager().createImage('Fukidashi', 'Fukidashi.png');
+		this._setImageCache(pic, this._FukidashiPic.picCache);		
+	}
 
-    return this._FukidashiPic.picCache;
+	return this._FukidashiPic.picCache;
 };
 
 CacheControl._createImageCache = function(pic) {
@@ -275,6 +318,8 @@ IrohaPlugin_GetisMoveMode = {
 	_enemyList: null,
 	_viewlengthtype: null,
 	_array: [],
+	_temparrayholder: [],
+	_outputarrayholder: [],
 
 	enemyturnSetup: function() {
 		this._simulator = root.getCurrentSession().createMapSimulator();
@@ -362,9 +407,18 @@ IrohaPlugin_GetisMoveMode = {
 			var unit = this._enemyList.getData(i);
 			this.preparedata(unit);
 
+			if (this._viewlengthtype == ViewLengthType.ALLMAP) {
+				return [];
+			}
+
 			temparray = this._array.concat(temparray);
 		}
+		if (temparray == this._temparrayholder) {
+			return this._outputarrayholder;
+		}
+		this._temparrayholder = temparray;
 		outputarray = this.ReverseArray(temparray);
+		this._outputarrayholder = outputarray;
 
 		return outputarray;
 	},
@@ -448,43 +502,44 @@ IrohaPlugin_GetisMoveMode = {
 
 makeHashList = function (list) {
 	var hashList = list.reduce(function(directory, value, index) {
-	  directory[value] = (directory[value] || []).concat(index);
-	  return directory;
+		directory[value] = (directory[value] || []).concat(index);
+		return directory;
 	}, {});
 	return hashList;
 }
+
 hashSearch = function (list, num) {
 	var index = -1;
 	if(num in list) {
-	  index = list[num];
+		index = list[num];
 	}
 	return index;
 }
 
 Array.prototype.reduce = function(callback /*, initialValue*/) {
-    'use strict';
-    if (this == null) {
-      throw new TypeError('Array.prototype.reduce called on null or undefined');
-    }
-    if (typeof callback !== 'function') {
-      throw new TypeError(callback + ' is not a function');
-    }
-    var t = Object(this), len = t.length >>> 0, k = 0, value;
-    if (arguments.length == 2) {
-      value = arguments[1];
-    } else {
-      while (k < len && !(k in t)) {
-        k++; 
-      }
-      if (k >= len) {
-        throw new TypeError('Reduce of empty array with no initial value');
-      }
-      value = t[k++];
-    }
-    for (; k < len; k++) {
-      if (k in t) {
-        value = callback(value, t[k], k, t);
-      }
-    }
-    return value;
+	'use strict';
+	if (this == null) {
+		throw new TypeError('Array.prototype.reduce called on null or undefined');
+	}
+	if (typeof callback !== 'function') {
+		throw new TypeError(callback + ' is not a function');
+	}
+	var t = Object(this), len = t.length >>> 0, k = 0, value;
+	if (arguments.length == 2) {
+		value = arguments[1];
+	} else {
+		while (k < len && !(k in t)) {
+		k++; 
+		}
+		if (k >= len) {
+		throw new TypeError('Reduce of empty array with no initial value');
+		}
+		value = t[k++];
+	}
+	for (; k < len; k++) {
+		if (k in t) {
+		value = callback(value, t[k], k, t);
+		}
+	}
+	return value;
 };
