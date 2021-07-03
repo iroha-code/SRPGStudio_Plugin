@@ -29,8 +29,8 @@
   ■バージョン履歴
   2021/06/27  新規作成
   2021/06/28　MarkingPanelの処理でも視界外が暗くなるように修正
-  2021/06/29　自軍ターン時，何も選択していないときに吹き出しを表示するよう修正
-  
+  2021/07/03　ユニット選択後，キャンセルを押すと吹き出しが正しく出ないバグ修正
+
 　■対応バージョン
 　SRPG Studio Version:1.234
   
@@ -64,10 +64,49 @@ MapEdit._completeMemberData = function() {
 	IrohaPlugin_GetisMoveMode.enemyturnSetup();
 }
 
-var alias33 = MapPartsCollection._configureMapParts;
+//ユニット移動先選択前にキャンセルした場合
+PlayerTurn._moveArea = function() {
+	var result = this._mapSequenceArea.moveSequence();
+		
+	if (result === MapSequenceAreaResult.COMPLETE) {
+		this._mapEdit.clearRange();
+		this._mapSequenceCommand.openSequence(this);
+		this.changeCycleMode(PlayerTurnMode.UNITCOMMAND);
+	}
+	else if (result === MapSequenceAreaResult.CANCEL) {
+		MapSequenceArea._inprocess = false;
+		IrohaPlugin_GetisMoveMode.enemyturnSetup();
+
+		this.changeCycleMode(PlayerTurnMode.MAP);
+	}
+	
+	return MoveResult.CONTINUE;
+}
+
+//ユニット移動先選択後にキャンセルした場合
+PlayerTurn._moveUnitCommand = function() {
+	var result = this._mapSequenceCommand.moveSequence();
+		
+	if (result === MapSequenceCommandResult.COMPLETE) {
+		this._mapSequenceCommand.resetCommandManager();
+		MapLayer.getMarkingPanel().updateMarkingPanelFromUnit(this._targetUnit);
+		this._changeEventMode();
+	}
+	else if (result === MapSequenceCommandResult.CANCEL) {
+		MapSequenceArea._inprocess = false;
+		IrohaPlugin_GetisMoveMode.enemyturnSetup();
+
+		this._mapSequenceCommand.resetCommandManager();
+		this.changeCycleMode(PlayerTurnMode.MAP);
+	}
+	
+	return MoveResult.CONTINUE;
+}
+
+var alias35 = MapPartsCollection._configureMapParts;
 MapPartsCollection._configureMapParts = function(groupArray) {
 	groupArray.appendObject(MapParts.Fukidashi);
-	alias33.call(this, groupArray);
+	alias35.call(this, groupArray);
 }
 
 MapParts.Fukidashi = defineObject(BaseMapParts,
@@ -203,6 +242,9 @@ MapSequenceArea._completeSequenceMemberData = function(parentTurnObject) {
 	this._inprocess = true;
 	var currentMapCursorX = this._mapCursor.getX();
 	var currentMapCursorY = this._mapCursor.getY();
+//	root.log(currentMapCursorX + ", " + currentMapCursorY);
+//	root.log(root.getCurrentSession().getUnitFromPos(currentMapCursorX, currentMapCursorY).getName());
+
 	IrohaPlugin_GetisMoveMode.fukidashiturnSetup(currentMapCursorX, currentMapCursorY, 0);
 };
 
@@ -493,6 +535,9 @@ IrohaPlugin_GetisMoveMode = {
 	}, 
 
 	getisMoveMode: function() {
+		if (!root.getCurrentSession().getActiveEventUnit()) {
+			return false;
+		}
 		if (root.getBaseScene() == SceneType.BATTLESETUP) {
 			return false;
 		} else {
