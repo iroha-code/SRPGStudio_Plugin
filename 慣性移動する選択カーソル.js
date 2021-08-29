@@ -27,7 +27,7 @@
 // 設定
 //----------------------------
 
-var CURSOL_MOVE_FRAME = 15; //コメントを表示するフレーム数を設定
+var CURSOL_MOVE_FRAME = 20; //慣性移動のフレーム数を設定
 
 //----------------------------
 
@@ -75,8 +75,6 @@ CommandCursor.drawCursor = function(x, y, isActive, pic) {
 		xSrc = this._commandCursorSrcIndex * width;
 		
 		if (isActive) {
-      root.log(y + ' ' + CommandCursor._inertiaCounter);
-
       //慣性移動実施のための処理 ------------------
       if (CommandCursor._inertiaCounter >= 0) CommandCursor._inertiaCounter--;
       var counter = CommandCursor._inertiaCounter;
