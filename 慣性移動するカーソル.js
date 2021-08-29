@@ -143,8 +143,8 @@ MouseControl._adjustMapCursor = function() {
   var xCursor = Math.floor((root.getMouseX() + session.getScrollPixelX() - root.getViewportX()) / GraphicsFormat.MAPCHIP_WIDTH);
   var yCursor = Math.floor((root.getMouseY()  + session.getScrollPixelY() - root.getViewportY()) / GraphicsFormat.MAPCHIP_HEIGHT);
   
-  var xboo = root.getCurrentSession().setMapCursorX(xCursor) !== root.getCurrentSession().getMapCursorX();
-  var yboo = root.getCurrentSession().setMapCursorY(yCursor) !== root.getCurrentSession().getMapCursorY();
+  var xboo = xCursor !== root.getCurrentSession().getMapCursorX();
+  var yboo = yCursor !== root.getCurrentSession().getMapCursorY();
 
   if ((xboo || yboo) && MapCursor._inertiaCounter === -1) {
     //マウス入力の場合
