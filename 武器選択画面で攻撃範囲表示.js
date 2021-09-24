@@ -27,7 +27,7 @@
 //-------------------------------------------
 // 設定
 //-------------------------------------------
-var RESULTWINDOW_WAVEPANEL_DISPLAY = true;
+var RESULTWINDOW_WAVEPANEL_DISPLAY = false;
 //-------------------------------------------
 
 (function() {
