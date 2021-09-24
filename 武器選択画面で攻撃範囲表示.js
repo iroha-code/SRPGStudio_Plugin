@@ -17,6 +17,13 @@
   ・SRPG Studio利用規約は遵守してください。
   
 --------------------------------------------------------------------------*/
+//-------------------------------------------
+// 設定
+//-------------------------------------------
+
+var RESULTWINDOW_WAVEPANEL_DISPLAY = true;
+
+//-------------------------------------------
 
 (function() {
 
@@ -51,5 +58,22 @@ UnitCommand.Attack._drawTop = function() {
 
   alias03.call(this);
 }
+
+
+
+var alias04 = UnitCommand.Attack._moveSelection;
+UnitCommand.Attack._moveSelection = function() {
+  if (RESULTWINDOW_WAVEPANEL_DISPLAY) this._wavePanel.moveWavePanel();
+
+  return alias04.call(this);  
+}
+
+var alias05 = UnitCommand.Attack._drawSelection;
+UnitCommand.Attack._drawSelection = function() {
+  if (RESULTWINDOW_WAVEPANEL_DISPLAY) root.drawWavePanel(this._indexArray, root.queryUI('range_panel'), this._wavePanel.getScrollCount());
+
+  return alias05.call(this);  
+}
+
 
 })();
