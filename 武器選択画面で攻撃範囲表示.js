@@ -11,7 +11,6 @@
 
   ■バージョン履歴
   2021/09/24  新規作成
-  2021/09/25  「戦闘予測画面で武器変更」のプラグインに対応
 
   ■対応バージョン
   SRPG Studio Version:1.244
@@ -78,8 +77,8 @@ UnitCommand.Attack._moveSelection = function() {
     }
 
     this._tmpweapon = weapon;
+    this._wavePanel.moveWavePanel();
   }
-  this._wavePanel.moveWavePanel();
 
   return alias04.call(this);  
 }
