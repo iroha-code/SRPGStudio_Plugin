@@ -11,6 +11,7 @@
 
   ■バージョン履歴
   2021/09/24  新規作成
+  2021/09/25  「戦闘予測画面で武器変更」のプラグインに対応
 
   ■対応バージョン
   SRPG Studio Version:1.244
@@ -24,13 +25,13 @@
   ・SRPG Studio利用規約は遵守してください。
   
 --------------------------------------------------------------------------*/
+
+(function() {
 //-------------------------------------------
 // 設定
 //-------------------------------------------
 var RESULTWINDOW_WAVEPANEL_DISPLAY = false;
 //-------------------------------------------
-
-(function() {
 
 UnitCommand.Attack._wavePanel = null;
 UnitCommand.Attack._indexArray = [];
@@ -43,6 +44,7 @@ UnitCommand.Attack._prepareCommandMemberData = function() {
   alias01.call(this);  
 }
 
+// 武器選択画面の攻撃範囲表示処理
 var alias02 = UnitCommand.Attack._moveTop;
 UnitCommand.Attack._moveTop = function() {
   var unit = this.getCommandTarget();
@@ -64,21 +66,31 @@ UnitCommand.Attack._drawTop = function() {
   alias03.call(this);
 }
 
-
-
+// 攻撃相手選択画面の範囲表示処理（RESULTWINDOW_WAVEPANEL_DISPLAY = true の場合のみ）
 var alias04 = UnitCommand.Attack._moveSelection;
 UnitCommand.Attack._moveSelection = function() {
-  if (RESULTWINDOW_WAVEPANEL_DISPLAY) this._wavePanel.moveWavePanel();
+  if (RESULTWINDOW_WAVEPANEL_DISPLAY) {
+    var unit = this.getCommandTarget();
+    var weapon = this._weaponSelectMenu.getSelectWeapon();
+  
+    if (!this._tmpweapon || this._tmpweapon !== weapon) {
+      this._indexArray = IndexArray.createIndexArray(unit.getMapX(), unit.getMapY(), weapon);
+    }
+
+    this._tmpweapon = weapon;
+  }
+  this._wavePanel.moveWavePanel();
 
   return alias04.call(this);  
 }
 
 var alias05 = UnitCommand.Attack._drawSelection;
 UnitCommand.Attack._drawSelection = function() {
-  if (RESULTWINDOW_WAVEPANEL_DISPLAY) root.drawWavePanel(this._indexArray, root.queryUI('range_panel'), this._wavePanel.getScrollCount());
+  if (RESULTWINDOW_WAVEPANEL_DISPLAY) {
+    root.drawWavePanel(this._indexArray, root.queryUI('range_panel'), this._wavePanel.getScrollCount());
+  }
 
   return alias05.call(this);  
 }
-
 
 })();
