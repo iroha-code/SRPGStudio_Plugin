@@ -20,42 +20,13 @@
 
 (function() {
 
+var alias = MapEdit._moveCursorMove;
 MapEdit._moveCursorMove = function() {
-	var unit = this._mapCursor.getUnitFromCursor();
-	var result = MapEditResult.NONE;
-
-	if (InputControl.isSelectAction()) {
-		result = this._selectAction(unit);
-	}
-	else if (InputControl.isCancelAction()) {
-		result = this._cancelAction(unit);
-	}
-	else if (InputControl.isOptionAction()) {
-		result = this._optionAction(unit);
-	}
-	else if (InputControl.isLeftPadAction()) {
-		this._changeTarget(false);
-	}
-	else if (InputControl.isRightPadAction()) {
-		this._changeTarget(true);
-	}
-	//ここ追加
-	else if (root.getCurrentScene() == SceneType.FREE && InputControl.isStartAction()) {
+	if (root.getCurrentScene() == SceneType.FREE && InputControl.isStartAction()) {
 		TurnControl.turnEnd();
 	}
-	//ここまで
-	else {
-		this._mapCursor.moveCursor();
-		this._mapPartsCollection.moveMapPartsCollection();
-		
-		unit = this.getEditTarget();
-		
-		// ユニットが変更された場合は更新
-		if (unit !== this._prevUnit) {
-			this._setUnit(unit);
-		}
-	}
-	return result;
+
+	return alias.call(this);
 }
 
 
