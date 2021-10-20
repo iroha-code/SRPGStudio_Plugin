@@ -1,10 +1,8 @@
 /*--------------------------------------------------------------------------
   
   味方移動時に敵軍攻撃範囲（MarkingPanel）更新
-
   ■バージョン履歴
   2021/10/19  新規作成
-
   ■対応バージョン
   SRPG Studio Version:1.225
   
@@ -21,27 +19,40 @@
 (function() {
 
 //移動後に更新
-var alias1 = PlayerTurn._moveArea;
 PlayerTurn._moveArea = function() {
   var result = this._mapSequenceArea.moveSequence();
 
   if (result === MapSequenceAreaResult.COMPLETE) {
-    MapLayer.getMarkingPanel().updateMarkingPanelFromUnit(this._targetUnit);
+    this._mapEdit.clearRange();
+    this._mapSequenceCommand.openSequence(this);
+    this.changeCycleMode(PlayerTurnMode.UNITCOMMAND);
+
+    MapLayer.getMarkingPanel().updateMarkingPanelFromUnit(this._targetUnit); //ここ追加
+  }
+  else if (result === MapSequenceAreaResult.CANCEL) {
+    this.changeCycleMode(PlayerTurnMode.MAP);
   }
   
-  return alias1.call(this);
+  return MoveResult.CONTINUE;
 }
 
 //移動後キャンセルしたときにも更新
-var alias2 = PlayerTurn._moveUnitCommand;
 PlayerTurn._moveUnitCommand = function() {
   var result = this._mapSequenceCommand.moveSequence();
-
-  if (result === MapSequenceCommandResult.CANCEL) {
+		
+  if (result === MapSequenceCommandResult.COMPLETE) {
+    this._mapSequenceCommand.resetCommandManager();
     MapLayer.getMarkingPanel().updateMarkingPanelFromUnit(this._targetUnit);
+    this._changeEventMode();
   }
+  else if (result === MapSequenceCommandResult.CANCEL) {
+    this._mapSequenceCommand.resetCommandManager();
+    this.changeCycleMode(PlayerTurnMode.MAP);
 
-  return alias2.call(this);
+    MapLayer.getMarkingPanel().updateMarkingPanelFromUnit(this._targetUnit); //ここ追加
+  }
+  
+  return MoveResult.CONTINUE;
 }
 
 })();
