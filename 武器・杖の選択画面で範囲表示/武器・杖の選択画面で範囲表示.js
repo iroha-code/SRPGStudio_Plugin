@@ -118,7 +118,9 @@ UnitCommand.Wand._tmpwand = null;
 
 var alias06 = UnitCommand.Wand._prepareCommandMemberData;
 UnitCommand.Wand._prepareCommandMemberData = function() {
-  this._wavePanel = createObject(WavePanel);
+  if (WAND_WAVEPANEL_DISPLAY) {
+    this._wavePanel = createObject(WavePanel);
+  }
 
   alias06.call(this);
 }
