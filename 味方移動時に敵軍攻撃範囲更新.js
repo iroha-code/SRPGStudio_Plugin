@@ -5,7 +5,7 @@
   ■バージョン履歴
   2021/10/19  新規作成
   2021/10/21  バグ改修
-  ※ PlayerTurn._moveArea と PlayerTurn._moveUnitCommand のalias化を解いたので，処理の競合にご注意ください。
+  2021/10/23  処理競合が発生しづらいよう，aliasを利用したコードに修正
 
   ■対応バージョン
   SRPG Studio Version:1.225
@@ -22,41 +22,83 @@
 
 (function() {
 
-//移動後に更新
+//-----------------------------------------------
+// 移動後に更新
+//-----------------------------------------------
+var alias01 = PlayerTurn._moveArea;
 PlayerTurn._moveArea = function() {
-  var result = this._mapSequenceArea.moveSequence();
+  var result = alias01.call(this);
+  root.log('iroha');
 
-  if (result === MapSequenceAreaResult.COMPLETE) {
-    this._mapEdit.clearRange();
-    this._mapSequenceCommand.openSequence(this);
-    this.changeCycleMode(PlayerTurnMode.UNITCOMMAND);
+  if (this._mapSequenceArea.getResultData() === MapSequenceAreaResult.COMPLETE) {
+    MapLayer.getMarkingPanel().updateMarkingPanelFromUnit(this._targetUnit);
+  }
 
-    MapLayer.getMarkingPanel().updateMarkingPanelFromUnit(this._targetUnit); //ここ追加
-  }
-  else if (result === MapSequenceAreaResult.CANCEL) {
-    this.changeCycleMode(PlayerTurnMode.MAP);
-  }
-  
-  return MoveResult.CONTINUE;
+  return result;
 }
 
-//移動後キャンセルしたときにも更新
-PlayerTurn._moveUnitCommand = function() {
-  var result = this._mapSequenceCommand.moveSequence();
-		
-  if (result === MapSequenceCommandResult.COMPLETE) {
-    this._mapSequenceCommand.resetCommandManager();
-    MapLayer.getMarkingPanel().updateMarkingPanelFromUnit(this._targetUnit);
-    this._changeEventMode();
-  }
-  else if (result === MapSequenceCommandResult.CANCEL) {
-    this._mapSequenceCommand.resetCommandManager();
-    this.changeCycleMode(PlayerTurnMode.MAP);
+var alias02 = MapSequenceArea._prepareSequenceMemberData;
+MapSequenceArea._prepareSequenceMemberData = function(parentTurnObject) {
+  alias02.call(this, parentTurnObject);
 
-    MapLayer.getMarkingPanel().updateMarkingPanelFromUnit(this._targetUnit); //ここ追加
+  // 終了結果格納用のメンバ変数を初期化
+  this._sequenceResultData = MapSequenceAreaResult.NONE;
+}
+
+var alias03 = MapSequenceArea.moveSequence;
+MapSequenceArea.moveSequence = function() {
+  var result = alias03.call(this);
+
+  // resultがMapSequenceAreaResult.NONE以外なら終了結果格納用のメンバ変数に格納
+  if (result !== MapSequenceAreaResult.NONE) {
+    this._sequenceResultData = result;
   }
-  
-  return MoveResult.CONTINUE;
+
+  return result;
+}
+
+// MapSequenceArea.moveSequence() の終了結果格納用のメンバ変数
+MapSequenceArea.getResultData = function() {
+  return this._sequenceResultData;
+}
+
+//-----------------------------------------------
+// 移動後キャンセルしたときにも更新
+//-----------------------------------------------
+var alias11 = PlayerTurn._moveUnitCommand;
+PlayerTurn._moveUnitCommand = function() {
+  var result = alias11.call(this);
+
+  if (this._mapSequenceCommand.getResultData() === MapSequenceCommandResult.CANCEL) {
+    MapLayer.getMarkingPanel().updateMarkingPanelFromUnit(this._targetUnit);
+  }
+
+  return result;
+}
+
+var alias12 = MapSequenceCommand._prepareSequenceMemberData;
+MapSequenceCommand._prepareSequenceMemberData = function(parentTurnObject) {
+  alias12.call(this, parentTurnObject);
+
+  // 終了結果格納用のメンバ変数を初期化
+  this._sequenceResultData = MapSequenceCommandResult.NONE;
+}
+
+var alias13 = MapSequenceCommand.moveSequence;
+MapSequenceCommand.moveSequence = function() {
+  var result = alias13.call(this);
+
+  // resultがMapSequenceCommandResult.NONE以外なら終了結果格納用のメンバ変数に格納
+  if (result !== MapSequenceCommandResult.NONE) {
+    this._sequenceResultData = result;
+  }
+
+  return result;
+}
+
+// MapSequenceCommand.moveSequence() の終了結果格納用のメンバ変数
+MapSequenceCommand.getResultData = function() {
+  return this._sequenceResultData;
 }
 
 })();
