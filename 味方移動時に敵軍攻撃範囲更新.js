@@ -28,7 +28,6 @@
 var alias01 = PlayerTurn._moveArea;
 PlayerTurn._moveArea = function() {
   var result = alias01.call(this);
-  root.log('iroha');
 
   if (this._mapSequenceArea.getResultData() === MapSequenceAreaResult.COMPLETE) {
     MapLayer.getMarkingPanel().updateMarkingPanelFromUnit(this._targetUnit);
