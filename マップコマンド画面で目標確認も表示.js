@@ -3,7 +3,8 @@
   マップコマンド画面で目標確認も表示
 
   ■バージョン履歴
-  2021/01/31  新規作成
+  2022/02/01  スクリプト競合を回避するよう修正
+  2022/01/31  新規作成
 
   ■対応バージョン
   SRPG Studio Version:1.225
@@ -18,6 +19,7 @@
   
 --------------------------------------------------------------------------*/
 
+(function() { 
 PlayerTurn._objectiveWindow = null;
 
 var alias01 = PlayerTurn._prepareTurnMemberData;
@@ -89,3 +91,4 @@ var MapCommandObjectiveWindow = defineObject(ObjectiveWindow,
 }
 );
   
+})();
