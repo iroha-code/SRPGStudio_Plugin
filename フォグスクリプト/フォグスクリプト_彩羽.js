@@ -80,39 +80,39 @@ CacheControl.get_FogPic = function() {
     return;
   }
 
-	if (!this._FogPic) {
-		pic = root.getMaterialManager().createImage('FogImage', fog_info.FOG_IMAGE_NAME);
-		this._FogPic = this._createImageCache(pic);
-	} else if (!this._FogPic.picCache.isCacheAvailable()) {
-		pic = root.getMaterialManager().createImage('FogImage', fog_info.FOG_IMAGE_NAME);
-		this._setImageCache(pic, this._FogPic.picCache);		
-	}
+  if (!this._FogPic) {
+    pic = root.getMaterialManager().createImage('FogImage', fog_info.FOG_IMAGE_NAME);
+    this._FogPic = this._createImageCache(pic);
+  } else if (!this._FogPic.picCache.isCacheAvailable()) {
+    pic = root.getMaterialManager().createImage('FogImage', fog_info.FOG_IMAGE_NAME);
+    this._setImageCache(pic, this._FogPic.picCache);		
+  }
 
-	return this._FogPic.picCache;
+  return this._FogPic.picCache;
 };
 
 CacheControl._createImageCache = function(pic) {
-	var picCache, height, width, cache;
+  var picCache, height, width, cache;
 
-	if (!pic) {
-		return null;
-	}
+  if (!pic) {
+    return null;
+  }
 
-	height = pic.getHeight();
-	width = pic.getWidth();
+  height = pic.getHeight();
+  width = pic.getWidth();
 
-	cache = {};
-	cache.picCache = root.getGraphicsManager().createCacheGraphics(width, height);
-	this._setImageCache(pic, cache.picCache);
+  cache = {};
+  cache.picCache = root.getGraphicsManager().createCacheGraphics(width, height);
+  this._setImageCache(pic, cache.picCache);
 
-	return cache;
+  return cache;
 };
 
 CacheControl._setImageCache = function(pic, picCache) {
-	var graphicsManager = root.getGraphicsManager();
-	graphicsManager.setRenderCache(picCache);
-	pic.draw(0, 0);
-	graphicsManager.resetRenderCache();
+  var graphicsManager = root.getGraphicsManager();
+  graphicsManager.setRenderCache(picCache);
+  pic.draw(0, 0);
+  graphicsManager.resetRenderCache();
 };
 
 
@@ -127,7 +127,7 @@ MapLayer._FogSpeed = [];
 
 var alias00 = MapLayer.prepareMapLayer;
 MapLayer.prepareMapLayer = function() {
-	alias00.call(this);
+  alias00.call(this);
 
   var currentScene = root.getCurrentScene();
   if (
@@ -202,26 +202,26 @@ MapLayer.drawUnitLayer = function() {
   for (var i = 0; i < fog_info.FOG_COUNT; i++) {
     pic.draw(this._FogX[i], this._FogY[i]);
     pic.setScale(this._FogScale[i]);
-    pic.setDegree(this._FogAngle[i]);
+    pic.setDegree(this._FogAngle[i] * 180 / Math.PI);
   }
 };
 
 MapLayer._getFogInfo = function() {
-	var currentSession = root.getCurrentSession();
-	if (!currentSession) {
-		return null;
-	}
+  var currentSession = root.getCurrentSession();
+  if (!currentSession) {
+    return null;
+  }
   var currentMapInfo = currentSession.getCurrentMapInfo();
-	if (!currentMapInfo) {
-		return null;
-	}
+  if (!currentMapInfo) {
+    return null;
+  }
   var fog_info = currentMapInfo.custom.iroha_fog;
   if (!fog_info) {
     return null;
-	}
+  }
 
-	return fog_info;
+  return fog_info;
 };
 
 })();
-
+  
