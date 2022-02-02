@@ -178,7 +178,7 @@ MapLayer.moveMapLayer = function() {
     return alias01.call(this);
   }
   if (!this._isEnableLocalSwitch()) {
-    return;
+    return alias01.call(this);
   }
 
   var pic = CacheControl.get_FogPic();

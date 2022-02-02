@@ -72,7 +72,7 @@ MapLayer.moveMapLayer = function() {
   var lightning_info = this._getLightningInfo();
   if (lightning_info) {
     if (!this._isEnableLocalSwitch()) {
-      return;
+      return alias01.call(this);
     }
     this._LightCounter++;
 
