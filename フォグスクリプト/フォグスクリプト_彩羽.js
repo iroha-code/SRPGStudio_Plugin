@@ -51,7 +51,22 @@
     FOG_SPEED_VAR: 0.2  //速度の1フレームごと変動値(pixel)
   }
 
+  例4：風雨
+  iroha_fog:{
+    FOG_IMAGE_NAME: 'rain.png', //使用するpngファイル名
+    FOG_COUNT: 50, //画面上に表示する数
+    FOG_SCALE_MIN: 20, //表示倍率の最小値(%)
+    FOG_SCALE_MAX: 30, //表示倍率の最大値(%) ※100以下を推奨
+    FOG_ANGLE_MIN: (-1 * Math.PI / 6), //進行角度の最小値(rad)
+    FOG_ANGLE_MAX: (-1 * Math.PI / 8), //進行角度の最大値(rad)
+    FOG_ANGLE_VAR: (Math.PI / 30),     //進行角度の1フレームごと変動値(rad)
+    FOG_SPEED_MIN: 0.8, //速度の最小値(pixel)
+    FOG_SPEED_MAX: 1.3, //速度の最大値(pixel)
+    FOG_SPEED_VAR: 0.2  //速度の1フレームごと変動値(pixel)
+  }
+
   ■バージョン履歴
+  2021/02/02  30FPSに対応
   2021/02/02  新規作成
 
   ■対応バージョン
@@ -80,39 +95,39 @@ CacheControl.get_FogPic = function() {
     return;
   }
 
-  if (!this._FogPic) {
-    pic = root.getMaterialManager().createImage('FogImage', fog_info.FOG_IMAGE_NAME);
-    this._FogPic = this._createImageCache(pic);
-  } else if (!this._FogPic.picCache.isCacheAvailable()) {
-    pic = root.getMaterialManager().createImage('FogImage', fog_info.FOG_IMAGE_NAME);
-    this._setImageCache(pic, this._FogPic.picCache);		
-  }
+	if (!this._FogPic) {
+		pic = root.getMaterialManager().createImage('FogImage', fog_info.FOG_IMAGE_NAME);
+		this._FogPic = this._createImageCache(pic);
+	} else if (!this._FogPic.picCache.isCacheAvailable()) {
+		pic = root.getMaterialManager().createImage('FogImage', fog_info.FOG_IMAGE_NAME);
+		this._setImageCache(pic, this._FogPic.picCache);		
+	}
 
-  return this._FogPic.picCache;
+	return this._FogPic.picCache;
 };
 
 CacheControl._createImageCache = function(pic) {
-  var picCache, height, width, cache;
+	var picCache, height, width, cache;
 
-  if (!pic) {
-    return null;
-  }
+	if (!pic) {
+		return null;
+	}
 
-  height = pic.getHeight();
-  width = pic.getWidth();
+	height = pic.getHeight();
+	width = pic.getWidth();
 
-  cache = {};
-  cache.picCache = root.getGraphicsManager().createCacheGraphics(width, height);
-  this._setImageCache(pic, cache.picCache);
+	cache = {};
+	cache.picCache = root.getGraphicsManager().createCacheGraphics(width, height);
+	this._setImageCache(pic, cache.picCache);
 
-  return cache;
+	return cache;
 };
 
 CacheControl._setImageCache = function(pic, picCache) {
-  var graphicsManager = root.getGraphicsManager();
-  graphicsManager.setRenderCache(picCache);
-  pic.draw(0, 0);
-  graphicsManager.resetRenderCache();
+	var graphicsManager = root.getGraphicsManager();
+	graphicsManager.setRenderCache(picCache);
+	pic.draw(0, 0);
+	graphicsManager.resetRenderCache();
 };
 
 
@@ -127,7 +142,7 @@ MapLayer._FogSpeed = [];
 
 var alias00 = MapLayer.prepareMapLayer;
 MapLayer.prepareMapLayer = function() {
-  alias00.call(this);
+	alias00.call(this);
 
   var currentScene = root.getCurrentScene();
   if (
@@ -144,8 +159,11 @@ MapLayer.prepareMapLayer = function() {
   }
 
   for (var i = 0; i < fog_info.FOG_COUNT; i++) {
-    this._FogX[i] = Math.random() * root.getGameAreaWidth();
-    this._FogY[i] = Math.random() * root.getGameAreaHeight();
+    var pic = CacheControl.get_FogPic();
+    var picsize = Math.max(pic.getWidth(), pic.getHeight());
+ 
+    this._FogX[i] = Math.random() * (root.getGameAreaWidth() + picsize * 2) - picsize;
+    this._FogY[i] = Math.random() * (root.getGameAreaHeight() + picsize * 2) - picsize;
     this._FogScale[i] = Math.random() * (fog_info.FOG_SCALE_MAX - fog_info.FOG_SCALE_MIN) + fog_info.FOG_SCALE_MIN;
     this._FogAngle[i] = Math.random() * (fog_info.FOG_ANGLE_MAX - fog_info.FOG_ANGLE_MIN) + fog_info.FOG_ANGLE_MIN;
     this._FogSpeed[i] = Math.random() * (fog_info.FOG_SPEED_MAX - fog_info.FOG_SPEED_MIN) + fog_info.FOG_SPEED_MIN;
@@ -161,8 +179,15 @@ MapLayer.moveMapLayer = function() {
 
   var pic = CacheControl.get_FogPic();
   for (var i = 0; i < fog_info.FOG_COUNT; i++) {
-    this._FogX[i] += Math.cos(this._FogAngle[i]) * this._FogSpeed[i];
-    this._FogY[i] += Math.sin(this._FogAngle[i]) * this._FogSpeed[i];
+
+    var speed = this._FogSpeed[i];
+    //30FPSの場合は速さを2倍に
+    if (!DataConfig.isHighPerformance()) {
+      speed *= 2;
+		}
+
+    this._FogX[i] += Math.cos(this._FogAngle[i]) * speed;
+    this._FogY[i] += Math.sin(this._FogAngle[i]) * speed;
   
     this._FogAngle[i] += (Math.random() - 0.5) * fog_info.FOG_ANGLE_VAR;
     this._FogAngle[i] = Math.max(this._FogAngle[i], fog_info.FOG_ANGLE_MIN);
@@ -172,17 +197,19 @@ MapLayer.moveMapLayer = function() {
     this._FogSpeed[i] = Math.max(this._FogSpeed[i], fog_info.FOG_SPEED_MIN);
     this._FogSpeed[i] = Math.min(this._FogSpeed[i], fog_info.FOG_SPEED_MAX);
 
-    if (this._FogX[i] > root.getGameAreaWidth() + pic.getWidth()) {
-      this._FogX[i] = -1 * pic.getWidth();
+    // 画面外に出たら、反対側にワープ
+    var picsize = Math.max(pic.getWidth(), pic.getHeight());
+    if (this._FogX[i] > root.getGameAreaWidth() + picsize) {
+      this._FogX[i] = -1 * picsize;
     }
-    if (this._FogX[i] < - pic.getWidth()) {
-      this._FogX[i] = root.getGameAreaWidth() + pic.getWidth();
+    if (this._FogX[i] < - picsize) {
+      this._FogX[i] = root.getGameAreaWidth() + picsize;
     }
-    if (this._FogY[i] > root.getGameAreaHeight() + pic.getHeight()) {
-      this._FogY[i] = -1 * pic.getHeight();
+    if (this._FogY[i] > root.getGameAreaHeight() + picsize) {
+      this._FogY[i] = -1 * picsize;
     }
-    if (this._FogY[i] < - pic.getHeight()) {
-      this._FogY[i] = root.getGameAreaHeight() + pic.getHeight();
+    if (this._FogY[i] < - picsize) {
+      this._FogY[i] = root.getGameAreaHeight() + picsize;
     }
   }
 
@@ -207,21 +234,21 @@ MapLayer.drawUnitLayer = function() {
 };
 
 MapLayer._getFogInfo = function() {
-  var currentSession = root.getCurrentSession();
-  if (!currentSession) {
-    return null;
-  }
+	var currentSession = root.getCurrentSession();
+	if (!currentSession) {
+		return null;
+	}
   var currentMapInfo = currentSession.getCurrentMapInfo();
-  if (!currentMapInfo) {
-    return null;
-  }
+	if (!currentMapInfo) {
+		return null;
+	}
   var fog_info = currentMapInfo.custom.iroha_fog;
   if (!fog_info) {
     return null;
-  }
+	}
 
-  return fog_info;
+	return fog_info;
 };
 
 })();
-  
+
