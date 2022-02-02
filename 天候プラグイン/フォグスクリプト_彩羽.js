@@ -9,7 +9,7 @@
 
   ■設定例
 
-  例1：降雪
+  例1：降雪（ローカルスイッチid:0 がONの場合のみ）
   iroha_fog:{
     FOG_IMAGE_NAME: 'snow.png', //使用するpngファイル名
     FOG_COUNT: 100, //画面上に表示する数
@@ -20,7 +20,8 @@
     FOG_ANGLE_VAR: (Math.PI / 30),     //進行角度の1フレームごと変動値(rad)
     FOG_SPEED_MIN: 1.0, //速度の最小値(pixel)
     FOG_SPEED_MAX: 1.5, //速度の最大値(pixel)
-    FOG_SPEED_VAR: 0.1  //速度の1フレームごと変動値(pixel)
+    FOG_SPEED_VAR: 0.1, //速度の1フレームごと変動値(pixel)
+    SWITCH_ID: 0 //起動条件になるローカルスイッチのID
   }
 
   例2：吹雪
@@ -53,16 +54,16 @@
 
   例4：風雨
   iroha_fog:{
-    FOG_IMAGE_NAME: 'rain.png', //使用するpngファイル名
-    FOG_COUNT: 50, //画面上に表示する数
-    FOG_SCALE_MIN: 20, //表示倍率の最小値(%)
-    FOG_SCALE_MAX: 30, //表示倍率の最大値(%) ※100以下を推奨
-    FOG_ANGLE_MIN: (-1 * Math.PI / 6), //進行角度の最小値(rad)
-    FOG_ANGLE_MAX: (-1 * Math.PI / 8), //進行角度の最大値(rad)
-    FOG_ANGLE_VAR: (Math.PI / 30),     //進行角度の1フレームごと変動値(rad)
-    FOG_SPEED_MIN: 0.8, //速度の最小値(pixel)
-    FOG_SPEED_MAX: 1.3, //速度の最大値(pixel)
-    FOG_SPEED_VAR: 0.2  //速度の1フレームごと変動値(pixel)
+    FOG_IMAGE_NAME: 'rain.png',
+    FOG_COUNT: 200, //画面上に表示する数
+    FOG_SCALE_MIN: 10, //表示倍率の最小値(%)
+    FOG_SCALE_MAX: 15, //表示倍率の最大値(%) ※100以下を推奨
+    FOG_ANGLE_MIN: (14 * Math.PI / 24), //進行角度の最小値(rad)
+    FOG_ANGLE_MAX: (15 * Math.PI / 24), //進行角度の最大値(rad)
+    FOG_ANGLE_VAR: (Math.PI / 120),     //進行角度の1フレームごと変動値(rad)
+    FOG_SPEED_MIN: 12.0, //速度の最小値(pixel)
+    FOG_SPEED_MAX: 15.0, //速度の最大値(pixel)
+    FOG_SPEED_VAR: 1.0  //速度の1フレームごと変動値(pixel)
   }
 
   ■バージョン履歴
@@ -176,6 +177,9 @@ MapLayer.moveMapLayer = function() {
   if (!fog_info) {
     return alias01.call(this);
   }
+  if (!this._isEnableLocalSwitch()) {
+    return;
+  }
 
   var pic = CacheControl.get_FogPic();
   for (var i = 0; i < fog_info.FOG_COUNT; i++) {
@@ -224,6 +228,9 @@ MapLayer.drawUnitLayer = function() {
   if (!fog_info) {
     return;
   }
+  if (!this._isEnableLocalSwitch()) {
+    return;
+  }
 
   var pic = CacheControl.get_FogPic();
   for (var i = 0; i < fog_info.FOG_COUNT; i++) {
@@ -246,9 +253,23 @@ MapLayer._getFogInfo = function() {
   if (!fog_info) {
     return null;
 	}
-
 	return fog_info;
 };
+
+MapLayer._isEnableLocalSwitch = function() {
+  var currentMapInfo = root.getCurrentSession().getCurrentMapInfo();
+  var fog_info = currentMapInfo.custom.iroha_fog;
+
+  if (fog_info.SWITCH_ID != null) {
+    var localSwitchTable = currentMapInfo.getLocalSwitchTable();
+    var switchIndex = localSwitchTable.getSwitchIndexFromId(fog_info.SWITCH_ID);
+    if (localSwitchTable.isSwitchOn(switchIndex)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 })();
 

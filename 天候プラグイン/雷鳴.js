@@ -8,13 +8,14 @@
   ※作っておいてアレですが、あまりオススメできないプラグインです。
     集中してマップを見るゲームで画面がフラッシュするのはプレイヤー側にストレスを与える可能性があります。
 
-  ■設定例(10～15秒の間隔で稲光が発生)
-  lightning:{
+  ■設定例(ローカルスイッチid:0がONのとき、10～15秒の間隔で稲光が発生)
+  lightning: {
     INTERVAL_MIN: 600, //稲光の時間間隔の最小値（60fpsベース）
     INTERVAL_MAX: 900, //稲光の時間間隔の最大値（60fpsベース）
     FULL_LIGHT  : 150, //稲光の明るさの最大値（255が最大）
     DURATION    : 10,  //稲光の継続時間（60fpsベース）
-    SOUND: {isRuntime: false, id: 0, rug: -10} //稲光の効果音（この行を抜いて上の行のカンマを抜くと音は鳴らなくなります）
+    SWITCH_ID   : 0,  //起動条件になるローカルスイッチのID（この行は必須ではありません）
+    SOUND: {isRuntime: false, id: 0, rug: -10} //稲光の効果音（この行は必須ではありません）
   }
 
   // SOUND: 以降についての補足
@@ -70,6 +71,9 @@ var alias01 = MapLayer.moveMapLayer;
 MapLayer.moveMapLayer = function() {
   var lightning_info = this._getLightningInfo();
   if (lightning_info) {
+    if (!this._isEnableLocalSwitch()) {
+      return;
+    }
     this._LightCounter++;
 
     //30FPSの場合は倍のCounterをのせる
@@ -87,6 +91,9 @@ MapLayer.drawUnitLayer = function() {
 
   var lightning_info = this._getLightningInfo();
   if (!lightning_info) {
+    return;
+  }
+  if (!this._isEnableLocalSwitch()) {
     return;
   }
 
@@ -143,6 +150,21 @@ MapLayer._getLightningInfo = function() {
 
 	return lightning_info;
 };
+
+MapLayer._isEnableLocalSwitch = function() {
+  var currentMapInfo = root.getCurrentSession().getCurrentMapInfo();
+  var lightning_info = currentMapInfo.custom.lightning;
+
+  if (lightning_info.SWITCH_ID != null) {
+    var localSwitchTable = currentMapInfo.getLocalSwitchTable();
+    var switchIndex = localSwitchTable.getSwitchIndexFromId(lightning_info.SWITCH_ID);
+    if (localSwitchTable.isSwitchOn(switchIndex)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 })();
 
