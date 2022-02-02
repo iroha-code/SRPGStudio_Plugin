@@ -177,7 +177,7 @@ MapLayer.moveMapLayer = function() {
   if (!fog_info) {
     return alias01.call(this);
   }
-  if (!this._isEnableLocalSwitch()) {
+  if (!this._isEnableLocalSwitchFog()) {
     return alias01.call(this);
   }
 
@@ -228,7 +228,7 @@ MapLayer.drawUnitLayer = function() {
   if (!fog_info) {
     return;
   }
-  if (!this._isEnableLocalSwitch()) {
+  if (!this._isEnableLocalSwitchFog()) {
     return;
   }
 
@@ -256,7 +256,7 @@ MapLayer._getFogInfo = function() {
 	return fog_info;
 };
 
-MapLayer._isEnableLocalSwitch = function() {
+MapLayer._isEnableLocalSwitchFog = function() {
   var currentMapInfo = root.getCurrentSession().getCurrentMapInfo();
   var fog_info = currentMapInfo.custom.iroha_fog;
 

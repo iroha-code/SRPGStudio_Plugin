@@ -71,7 +71,7 @@ var alias01 = MapLayer.moveMapLayer;
 MapLayer.moveMapLayer = function() {
   var lightning_info = this._getLightningInfo();
   if (lightning_info) {
-    if (!this._isEnableLocalSwitch()) {
+    if (!this._isEnableLocalSwitchLightning()) {
       return alias01.call(this);
     }
     this._LightCounter++;
@@ -93,7 +93,7 @@ MapLayer.drawUnitLayer = function() {
   if (!lightning_info) {
     return;
   }
-  if (!this._isEnableLocalSwitch()) {
+  if (!this._isEnableLocalSwitchLightning()) {
     return;
   }
 
@@ -151,7 +151,7 @@ MapLayer._getLightningInfo = function() {
 	return lightning_info;
 };
 
-MapLayer._isEnableLocalSwitch = function() {
+MapLayer._isEnableLocalSwitchLightning = function() {
   var currentMapInfo = root.getCurrentSession().getCurrentMapInfo();
   var lightning_info = currentMapInfo.custom.lightning;
 
