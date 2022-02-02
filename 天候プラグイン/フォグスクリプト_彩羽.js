@@ -263,12 +263,12 @@ MapLayer._isEnableLocalSwitch = function() {
   if (fog_info.SWITCH_ID != null) {
     var localSwitchTable = currentMapInfo.getLocalSwitchTable();
     var switchIndex = localSwitchTable.getSwitchIndexFromId(fog_info.SWITCH_ID);
-    if (localSwitchTable.isSwitchOn(switchIndex)) {
-      return true;
+    if (!localSwitchTable.isSwitchOn(switchIndex)) {
+      return false;
     }
   }
 
-  return false;
+  return true;
 }
 
 })();
