@@ -21,11 +21,13 @@
 
 (function() { 
 PlayerTurn._objectiveWindow = null;
+PlayerTurn._isObjectiveWindowActive = false;
 
 var alias01 = PlayerTurn._prepareTurnMemberData;
 PlayerTurn._prepareTurnMemberData = function() {
   alias01.call(this);
   this._objectiveWindow = createWindowObject(MapCommandObjectiveWindow, this);
+  PlayerTurn._isObjectiveWindowActive = false;
 }
 
 var alias02 = PlayerTurn._completeTurnMemberData;
@@ -38,10 +40,25 @@ var alias03 = PlayerTurn._drawMapCommand;
 PlayerTurn._drawMapCommand = function() {
   alias03.call(this);
 
-  var x = root.getGameAreaWidth() - this._objectiveWindow.getWindowWidth() - 30;
-  var y = LayoutControl.getRelativeY(12);
-  
-  this._objectiveWindow.drawWindow(x, y);
+  if (PlayerTurn._isObjectiveWindowActive === true) {
+    var x = root.getGameAreaWidth() - this._objectiveWindow.getWindowWidth() - 30;
+    var y = LayoutControl.getRelativeY(12);
+    
+    this._objectiveWindow.drawWindow(x, y);
+  }
+}
+
+var alias04 = MapCommand.drawListCommandManager;
+MapCommand.drawListCommandManager = function() {
+  alias04.call(this);
+  var mode = this.getCycleMode();
+
+  if (mode === ListCommandManagerMode.TITLE) {
+    PlayerTurn._isObjectiveWindowActive = true;
+  }
+  else if (mode === ListCommandManagerMode.OPEN) {
+    PlayerTurn._isObjectiveWindowActive = false;
+  }
 }
 
 var MapCommandObjectiveWindow = defineObject(ObjectiveWindow,
@@ -54,6 +71,11 @@ var MapCommandObjectiveWindow = defineObject(ObjectiveWindow,
   drawWindowContent: function(x, y) {
     this._drawObjectiveArea(x, y);
     this._drawArea(x, y);
+
+		// 既に画面が塗りつぶされている場合は、戻すだけでよい
+		if (SceneManager.isScreenFilled()) {
+      root.log('kkk');
+    }
   },
   
   getWindowWidth: function() {
