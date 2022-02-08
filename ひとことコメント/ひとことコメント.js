@@ -25,7 +25,27 @@
   ------------
 　さらに，「オリジナルデータ」タブの「数値1」をNPCリスト番号に，「数値2」をNPCリストIDに設定してください。
 
-  ③ アイコン＋テキスト を出したい場合
+  ① ユニットの立ち絵画像＋テキスト を出したい場合
+  イベントコマンドの「スクリプトの実行」から「コード実行」を選択し，以下のように記述してください。
+  ------------
+  var text = '表示させたい文言'
+  IrohaPlugin._execute('unitIllust', text);
+  ------------
+　さらに，「オリジナルデータ」タブで，発言者になるユニットを設定してください。
+  また「オリジナルデータ」タブの「数値3」を立ち絵画像の番号に設定してください。
+  ※立ち絵の番号は「表情の編集」において，「通常」＝0，「微笑む」＝1，「キメ顔」＝2，…　のように対応しています。
+
+  ② NPCの顔画像＋テキスト を出したい場合
+  イベントコマンドの「スクリプトの実行」から「コード実行」を選択し，以下のように記述してください。
+  ------------
+  var text = '表示させたい文言'
+  IrohaPlugin._execute('npcIllust', text);
+  ------------
+　さらに，「オリジナルデータ」タブの「数値1」をNPCリスト番号に，「数値2」をNPCリストIDに設定してください。
+  また「オリジナルデータ」タブの「数値3」を立ち絵画像の番号に設定してください。
+  ※立ち絵の番号は「表情の編集」において，「通常」＝0，「微笑む」＝1，「キメ顔」＝2，…　のように対応しています。
+
+  ⑤ アイコン＋テキスト を出したい場合
   イベントコマンドの「スクリプトの実行」から「コード実行」を選択し，以下のように記述してください。
   ------------
   var text = '表示させたい文言'
@@ -37,7 +57,7 @@
   「数値3」：アイコンのx座標（左から0，1，2，…でカウント）
   「数値4」：アイコンのy座標（上から0，1，2，…でカウント）
 
-  ③ テキストのみ を出したい場合
+  ⑥ テキストのみ を出したい場合
   イベントコマンドの「スクリプトの実行」から「コード実行」を選択し，以下のように記述してください。
   ------------
   var text = '表示させたい文言'
@@ -47,11 +67,13 @@
   ■注意事項
   ・すでに他のスクリプトで「ContentRenderer.drawUnitPartFace」（QBU氏作成）が使用されている場合は，
   　本スクリプトの該当箇所を削除してください。
-  ・本スクリプトの「設定」から，コメントを表示するフレーム数や枠の長さを設定できます。
+  ・本スクリプトの「設定」から，コメントを表示するフレーム数や枠の大きさを設定できます。
+  ・テキスト中に「\n」を入れると改行できます。
 
   ■バージョン履歴
-  2021/06/15  新規作成
+  2022/02/08  CharaIllust表示対応，30FPSに対応
   2021/06/16　NPC，アイコン，テキストのみを表示できるようにアップデート
+  2021/06/15  新規作成
 
 　■対応バージョン
 　SRPG Studio Version:1.234
@@ -81,6 +103,9 @@ var IrohaPlugin_CharacterComment_WindowWidth = 480;
 //表示するY座標を設定
 var IrohaPlugin_CharacterComment_Y = 20;
 
+//表示するWindowの高さを設定
+var IrohaPlugin_CharacterComment_Height = 33; // 1行の場合は33
+
 //----------------------------
 // 以下，本処理
 //----------------------------
@@ -90,18 +115,21 @@ var IrohaPlugin = {
 	_unit: null,
 	_text:'',
 	_handle: null,
+	_illustid: 0,
 
 	_execute: function(type, text) {
 		this._cyclecounter = IrohaPlugin_CharacterComment_AppearanceTime;
 		this._type = type;
 		this._text = text;
 
-		if (type == 'unit') {
+		if (type == 'unit' || type == 'unitIllust') {
 			this._unit = root.getEventCommandObject().getOriginalContent().getUnit();
-		} else if (type == 'npc') {
+			this._illustid = root.getEventCommandObject().getOriginalContent().getValue(2);
+		} else if (type == 'npc' || type == 'npcIllust') {
 			var listid = root.getEventCommandObject().getOriginalContent().getValue(0) + 1;
 			var dataid = root.getEventCommandObject().getOriginalContent().getValue(1);
 			this._unit = root.getBaseData().getNpcList(listid).getDataFromId(dataid);
+			this._illustid = root.getEventCommandObject().getOriginalContent().getValue(2);
 		} else if (type == 'icon') {
 			var isRuntime = root.getEventCommandObject().getOriginalContent().getValue(0);
 			var id = root.getEventCommandObject().getOriginalContent().getValue(1);
@@ -114,6 +142,11 @@ var IrohaPlugin = {
 	_cyclechecker: function() {
 		if (this._cyclecounter > 0) {
 			this._cyclecounter--;
+
+			//30FPSの場合は速さを2倍に
+			if (!DataConfig.isHighPerformance()) {
+				this._cyclecounter--;
+			}
 		}
 		return (this._cyclecounter > 0)
 	},
@@ -143,9 +176,8 @@ var IrohaPlugin = {
 //			alpha = alpha - (fadetime - this._cyclecounter) * (255 / fadetime);
 		}
 		WindowRenderer.drawStretchWindow(x, y, width, height, pic);
-		
+
 		x += this._getWindowXPadding();
-		y += this._getWindowYPadding();
 		this._drawContent(x, y, alpha);
 	},
 	
@@ -160,19 +192,29 @@ var IrohaPlugin = {
 		var isReverse = false;
 
 		var dx = 0;
-		var dy = -7;
+		var dy = 0;
 
 		if (this._type == 'unit' || this._type == 'npc') {
 			dx = GraphicsFormat.FACE_WIDTH + 24;
-			var tmpy = -13;
-			ContentRenderer.drawUnitPartFace(x, y + tmpy, unit, isReverse, alpha);
+			var destHeight = this._getWindowHeight() - 6;
+			ContentRenderer.drawUnitPartFace(x, y + 3, unit, isReverse, alpha, destHeight);
+		}
+		if (this._type == 'unitIllust' || this._type == 'npcIllust') {
+			var pic = unit.getCharIllustImage(this._illustid);
+			if (pic !== null) {
+				dx = pic.getWidth() + 24;
+				var destHeight = this._getWindowHeight() - 3;
+				ContentRenderer.drawUnitillustImage(x, y, unit, isReverse, alpha, pic, destHeight);
+			}
 		}
 		if (this._type == 'icon') {
-			dx = GraphicsFormat.ICON_WIDTH + 5;
-			var tmpy = -12;
+			dx = GraphicsFormat.ICON_WIDTH + 10;
+			var tmpy = this._getWindowHeight() * 1/2 - 3 - 1/2 * GraphicsFormat.ICON_WIDTH;
 			GraphicsRenderer.drawImage(x, y + tmpy, this._handle, GraphicsType.ICON);
 		}
-		TextRenderer.drawAlphaText(x + dx, y + dy, text, length, color, alpha, font);
+
+		var range = createRangeObject(x + dx, y + dy, this._getWindowWidth(), this._getWindowHeight());
+		TextRenderer.drawRangeAlphaText(range, TextFormat.LEFT, text, length, color, alpha, font);
 	},
 	
 	_getTextLength: function() {
@@ -191,16 +233,12 @@ var IrohaPlugin = {
 		return DefineControl.getWindowXPadding();
 	},
 	
-	_getWindowYPadding: function() {
-		return DefineControl.getWindowYPadding();
-	},
-	
 	_getWindowWidth: function() {
 		return IrohaPlugin_CharacterComment_WindowWidth;
 	},
 	
 	_getWindowHeight: function() {
-		return 33;
+		return IrohaPlugin_CharacterComment_Height;
 	},
 	
 	_getWindowTextUI: function() {
@@ -208,12 +246,11 @@ var IrohaPlugin = {
 	}
 }
 
-ContentRenderer.drawUnitPartFace = function(x, y, unit, isReverse, alpha) {
+ContentRenderer.drawUnitPartFace = function(x, y, unit, isReverse, alpha, destHeight) {
 	var handle = unit.getFaceResourceHandle();
 	var pic = GraphicsRenderer.getGraphics(handle, GraphicsType.FACE);
 	var xSrc, ySrc
 	var destWidth = GraphicsFormat.FACE_WIDTH;
-	var destHeight = 27;
 	var srcWidth = destWidth;
 	var srcHeight = GraphicsFormat.FACE_HEIGHT;	
 
@@ -225,6 +262,17 @@ ContentRenderer.drawUnitPartFace = function(x, y, unit, isReverse, alpha) {
 	xSrc = handle.getSrcX() * srcWidth;
 	ySrc = handle.getSrcY() * srcHeight + Math.floor(GraphicsFormat.FACE_HEIGHT / 3);
 	pic.drawStretchParts(x, y, destWidth, destHeight, xSrc, ySrc, srcWidth, destHeight);
+};
+
+ContentRenderer.drawUnitillustImage = function(x, y, unit, isReverse, alpha, pic, destHeight) {
+	if (pic === null) {
+		return;
+	}
+	var height = pic.getHeight();
+
+	pic.setReverse(isReverse);
+	pic.setAlpha(alpha);
+	pic.draw(x, y - height + destHeight);
 };
 
 (function() {
