@@ -67,8 +67,9 @@
   }
 
   ■バージョン履歴
-  2021/02/02  30FPSに対応
-  2021/02/02  新規作成
+  2022/02/12  マップロード時に画像キャッシュを破棄する処理を追加（マップをまたいで天候が保持されてしまうバグを解消）
+  2022/02/02  30FPSに対応
+  2022/02/02  新規作成
 
   ■対応バージョン
   SRPG Studio Version:1.225
@@ -88,6 +89,10 @@
 // 画像のキャッシュ処理
 //--------------------------------------------------
 CacheControl._FogPic = null;
+
+CacheControl.initialize_FogPic = function() {
+  this._FogPic = null;
+}
 
 CacheControl.get_FogPic = function() {
   var pic;
@@ -154,6 +159,7 @@ MapLayer.prepareMapLayer = function() {
     return;
   }
 
+  CacheControl.initialize_FogPic();
   var fog_info = this._getFogInfo();
   if (!fog_info) {
     return;
