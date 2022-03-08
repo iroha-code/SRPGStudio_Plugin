@@ -252,11 +252,11 @@ MapLayer.drawUnitLayer = function() {
   }
 
   var pic = CacheControl.get_FogPic(fog_info);
-  var AngleCorrection = 180 / Math.PI;
+  var angleCorrection = 180 / Math.PI;
   for (var i = 0; i < fog_info.FOG_COUNT; i++) {
     pic.draw(this._FogX[i], this._FogY[i]);
     pic.setScale(this._FogScale[i]);
-    pic.setDegree(this._FogAngle[i] * AngleCorrection);
+    pic.setDegree(this._FogAngle[i] * angleCorrection);
   }
 };
 
