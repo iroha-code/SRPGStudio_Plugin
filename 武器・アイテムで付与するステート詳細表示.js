@@ -6,7 +6,8 @@
   アイテム詳細ウインドウに隣接してステートの説明文を表示します。
 
   ■バージョン履歴
-  2022/03/25  新規作成
+  2022/03/25 変数宣言ができていなかったのを修正・その他微修正
+  2022/03/25 新規作成
 
   ■対応バージョン
   SRPG Studio Version:1.225
@@ -24,17 +25,6 @@
 (function() {
 
 // --------------------------------------------------
-// ....SelectMenu.moveWindowManager をエイリアス化するための補助処理
-// --------------------------------------------------
-ItemListScrollbar._tempIndex = false;
-var alias00 = ItemListScrollbar.checkAndUpdateIndex;
-ItemListScrollbar.checkAndUpdateIndex = function() {
-  this._tempIndex = this._prevIndex;
-
-  return alias00.call(this);
-}
-
-// --------------------------------------------------
 // WeaponSelectMenu にItemStateInfoWindowを追加
 // --------------------------------------------------
 WeaponSelectMenu._itemStateInfoWindow = null;
@@ -50,9 +40,8 @@ var alias02 = WeaponSelectMenu.moveWindowManager;
 WeaponSelectMenu.moveWindowManager = function() {
   var result = alias02.call(this);
 
-  if (this._itemListWindow._scrollbar._tempIndex !== this._itemListWindow._scrollbar.getIndex()) {
+  if (this._itemInfoWindow._isWindowEnabled) {
     this._itemStateInfoWindow.setInfoItem(this._itemListWindow.getCurrentItem());
-    this._itemListWindow._scrollbar._tempIndex = this._itemListWindow._scrollbar.getIndex();
 
     //上方向以外 表示可能
     var x = this.getPositionWindowX();
@@ -86,9 +75,8 @@ var alias12 = WandSelectMenu.moveWindowManager;
 WandSelectMenu.moveWindowManager = function() {
   var result = alias12.call(this);
 
-  if (this._itemListWindow._scrollbar._tempIndex !== this._itemListWindow._scrollbar.getIndex()) {
+  if (this._itemInfoWindow._isWindowEnabled) {
     this._itemStateInfoWindow.setInfoItem(this._itemListWindow.getCurrentItem());
-    this._itemListWindow._scrollbar._tempIndex = this._itemListWindow._scrollbar.getIndex();
 
     //上方向以外 表示可能
     var x = this.getPositionWindowX();
@@ -121,9 +109,8 @@ var alias22 = ItemSelectMenu.moveWindowManager;
 ItemSelectMenu.moveWindowManager = function() {
   var result = alias22.call(this);
 
-  if (this._itemListWindow._scrollbar._tempIndex !== this._itemListWindow._scrollbar.getIndex()) {
+  if (this._itemInfoWindow._isWindowEnabled) {
     this._itemStateInfoWindow.setInfoItem(this._itemListWindow.getCurrentItem());
-    this._itemListWindow._scrollbar._tempIndex = this._itemListWindow._scrollbar.getIndex();
 
     //上方向以外 表示可能
     var x = this.getPositionWindowX();
@@ -157,12 +144,8 @@ var alias32 = UnitMenuBottomWindow.moveWindowContent;
 UnitMenuBottomWindow.moveWindowContent = function() {
   var result = alias32.call(this);
 
-  if (this._itemInteraction._window._isWindowEnabled) {
-    var item = this._itemInteraction._scrollbar.getObject();
-    this._itemStateInfoWindow.setInfoItem(item);
-  } else {
-    this._itemStateInfoWindow.setInfoItem(null);
-  }
+  this._itemStateInfoWindow.setInfoItem(this._itemInteraction._window.getInfoItem());
+
   return result;
 }
 
@@ -175,7 +158,7 @@ UnitMenuBottomWindow._drawInfoWindow = function(xBase, yBase) {
   }
 
   var help = this._getActiveUnitMenuHelp();
-  x = xBase + ItemRenderer.getItemWidth();
+  var x = xBase + ItemRenderer.getItemWidth();
   if (help === UnitMenuHelp.ITEM) {
     if (x + this._itemInteraction.getInteractionWindow().getWindowWidth() > root.getGameAreaWidth()) {
       x -= x + this._itemInteraction.getInteractionWindow().getWindowWidth() - root.getGameAreaWidth();
@@ -202,15 +185,7 @@ ShopLayoutScreen._prepareScreenMemberData = function(screenParam) {
 
 var alias42 = ShopLayoutScreen._processMode;
 ShopLayoutScreen._processMode = function(mode) {
-  if (mode === ShopLayoutMode.BUYSELLSELECT) {
-    this._itemStateInfoWindow.setInfoItem(null);
-  }
-  else if (mode === ShopLayoutMode.BUY) {
-    this._itemStateInfoWindow.setInfoItem(this._buyItemWindow.getShopSelectItem());
-  }
-  else if (mode === ShopLayoutMode.SELL) {
-    this._itemStateInfoWindow.setInfoItem(this._sellItemWindow.getShopSelectItem());
-  }
+  this._itemStateInfoWindow.setInfoItem(this._itemInfoWindow.getInfoItem());
 
   alias42.call(this, mode);
 }
@@ -247,9 +222,7 @@ BonusLayoutScreen._prepareScreenMemberData = function(screenParam) {
 
 var alias52 = BonusLayoutScreen._processMode;
 BonusLayoutScreen._processMode = function(mode) {
-  if (mode === ShopLayoutMode.BUY) {
-    this._itemStateInfoWindow.setInfoItem(this._buyItemWindow.getShopSelectItem());
-  }
+  this._itemStateInfoWindow.setInfoItem(this._itemInfoWindow.getInfoItem());
 
   alias52.call(this, mode);
 }
@@ -288,9 +261,8 @@ var alias62 = DurabilitySelectManager.moveWindowManager;
 DurabilitySelectManager.moveWindowManager = function() {
   var result = alias62.call(this);
 
-  if (this._itemListWindow._scrollbar._tempIndex !== this._itemListWindow._scrollbar.getIndex()) {
+  if (this._itemInfoWindow._isWindowEnabled) {
     this._itemStateInfoWindow.setInfoItem(this._itemListWindow.getCurrentItem());
-    this._itemListWindow._scrollbar._tempIndex = this._itemListWindow._scrollbar.getIndex();
 
     //上方向以外 表示可能
     var x = this.getPositionWindowX();
@@ -324,12 +296,7 @@ var alias72 = StockItemTradeScreen.moveScreenCycle;
 StockItemTradeScreen.moveScreenCycle = function() {
   var result = alias72.call(this);
 
-  if (this._itemInfoWindow._isWindowEnabled) {
-    var item = this._itemInfoWindow.getInfoItem();
-    this._itemStateInfoWindow.setInfoItem(item);
-  } else {
-    this._itemStateInfoWindow.setInfoItem(null);
-  }
+  this._itemStateInfoWindow.setInfoItem(this._itemInfoWindow.getInfoItem());
 
   return result;
 }
@@ -345,11 +312,11 @@ StockItemTradeScreen.drawScreenCycle = function() {
   var y = LayoutControl.getCenterY(-1, stockWindowHeight);
 
   if (this._isRightSideInfoWindow()) {
-    xInfo = x + this._stockItemWindow.getWindowWidth();
-    yInfo = (y + stockWindowHeight) - this._itemInfoWindow.getWindowHeight();
+    var xInfo = x + this._stockItemWindow.getWindowWidth();
+    var yInfo = (y + stockWindowHeight) - this._itemInfoWindow.getWindowHeight();
   } else {
-    xInfo = (x + unitWindowWidth) - this._itemInfoWindow.getWindowWidth();
-    yInfo = (y + stockWindowHeight) - this._itemInfoWindow.getWindowHeight();
+    var xInfo = (x + unitWindowWidth) - this._itemInfoWindow.getWindowWidth();
+    var yInfo = (y + stockWindowHeight) - this._itemInfoWindow.getWindowHeight();
   }
 
   //上方向のみ 表示可能
