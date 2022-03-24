@@ -71,11 +71,6 @@ var MapCommandObjectiveWindow = defineObject(ObjectiveWindow,
   drawWindowContent: function(x, y) {
     this._drawObjectiveArea(x, y);
     this._drawArea(x, y);
-
-		// 既に画面が塗りつぶされている場合は、戻すだけでよい
-		if (SceneManager.isScreenFilled()) {
-      root.log('kkk');
-    }
   },
   
   getWindowWidth: function() {
