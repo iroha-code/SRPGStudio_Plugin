@@ -95,7 +95,7 @@ SkillScreen.drawScreenCycle = function() {
   var x = LayoutControl.getCenterX(-1, width) + this._skillListWindow.getWindowWidth();
   var y = LayoutControl.getCenterY(-1, height) + (height - this._skillInfoWindow.getWindowHeight());
 
-  //下方向のみ 表示可能
+  //上方向のみ 表示可能
   this._skillStateInfoWindow.setWindowDirection(x, y, this._skillInfoWindow.getWindowWidth(), this._skillInfoWindow.getWindowHeight(), false, true, false, false);  
   this._skillStateInfoWindow.drawWindow(this._skillStateInfoWindow._x, this._skillStateInfoWindow._y);
 }
