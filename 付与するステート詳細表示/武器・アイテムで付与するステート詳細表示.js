@@ -2,10 +2,15 @@
 
   武器・アイテムで付与するステート詳細表示
 
-  武器に「追加ステート」の設定がある場合、あるいはアイテムの種類が「ステート付加」の場合、
-  アイテム詳細ウインドウに隣接してステートの説明文を表示します。
+  ■概要
+  ・「追加ステート」の設定がある武器
+  ・「ステート付加」アイテム
+  ・o-to様の「範囲攻撃アイテム」プラグインで付与ステート（IER_AddState）が設定されているアイテム
+  について、アイテム詳細ウインドウに隣接してステートの説明文を表示します。
+  ※本プラグインの作成者は彩羽です。本プラグインについてo-to様への問い合わせは避けてください。
 
   ■バージョン履歴
+  2022/03/27 o-to様の「範囲攻撃アイテム」プラグインの付与ステートも表示するよう修正
   2022/03/25 変数宣言ができていなかったのを修正・その他微修正
   2022/03/25 新規作成
 
@@ -193,6 +198,7 @@ ShopLayoutScreen._processMode = function(mode) {
 var alias43 = ShopLayoutScreen.notifyInfoItem;
 ShopLayoutScreen.notifyInfoItem = function(item) {
   alias43.call(this, item);
+
   this._itemStateInfoWindow.setInfoItem(item);
 }
 
@@ -210,6 +216,7 @@ ShopLayoutScreen.drawScreenCycle = function() {
 
 // --------------------------------------------------
 // BonusLayoutScreen にItemStateInfoWindowを追加
+// BonusLayoutScreen._prepareScreenMemberData 以外の処理はShopLayoutScreenと共通
 // --------------------------------------------------
 BonusLayoutScreen._itemStateInfoWindow = null;
 
@@ -218,31 +225,6 @@ BonusLayoutScreen._prepareScreenMemberData = function(screenParam) {
   alias51.call(this, screenParam);
 
   this._itemStateInfoWindow = createWindowObject(ItemStateInfoWindow, this); 
-}
-
-var alias52 = BonusLayoutScreen._processMode;
-BonusLayoutScreen._processMode = function(mode) {
-  this._itemStateInfoWindow.setInfoItem(this._itemInfoWindow.getInfoItem());
-
-  alias52.call(this, mode);
-}
-
-var alias53 = BonusLayoutScreen.notifyInfoItem;
-BonusLayoutScreen.notifyInfoItem = function(item) {
-  alias53.call(this, item);
-  this._itemStateInfoWindow.setInfoItem(item);
-}
-
-var alias54 = BonusLayoutScreen.drawScreenCycle;
-BonusLayoutScreen.drawScreenCycle = function() {
-  alias54.call(this);
-
-  var x = LayoutControl.getCenterX(-1, this._getTopWindowWidth()) + this._activeItemWindow.getWindowWidth();
-  var y = LayoutControl.getCenterY(-1, this._getTopWindowHeight()) + this._keeperWindow.getWindowHeight();
-
-  // 下方向のみ 表示可能
-  this._itemStateInfoWindow.setWindowDirection(x, y, this._itemInfoWindow.getWindowWidth(), this._itemInfoWindow.getWindowHeight(), false, false, false, true);  
-  this._itemStateInfoWindow.drawWindow(this._itemStateInfoWindow._x, this._itemStateInfoWindow._y);
 }
 
 // --------------------------------------------------
@@ -319,8 +301,8 @@ StockItemTradeScreen.drawScreenCycle = function() {
     var yInfo = (y + stockWindowHeight) - this._itemInfoWindow.getWindowHeight();
   }
 
-  //上方向のみ 表示可能
-  this._itemStateInfoWindow.setWindowDirection(xInfo, yInfo, this._itemInfoWindow.getWindowWidth(), this._itemInfoWindow.getWindowHeight(), false, true, false, false);  
+  //すべての方向 表示不能
+  this._itemStateInfoWindow.setWindowDirection(xInfo, yInfo, this._itemInfoWindow.getWindowWidth(), this._itemInfoWindow.getWindowHeight(), false, false, false, false);  
   this._itemStateInfoWindow.drawWindow(this._itemStateInfoWindow._x, this._itemStateInfoWindow._y);
 }
 
@@ -330,7 +312,8 @@ StockItemTradeScreen.drawScreenCycle = function() {
 var ItemStateInfoWindow = defineObject(BaseWindow,
 {
   _item: null,
-  _state: null,
+  _stateArr: [],
+  _stateArrIndex: 0,
   _infotext: null,
   _x: 0,
   _y: 0,
@@ -343,14 +326,28 @@ var ItemStateInfoWindow = defineObject(BaseWindow,
       return;
     }
 
+    //範囲攻撃アイテムで付与するステートが複数になっている場合の切替え対応
+    //BTN5（Aキー）にて対応
+    if(InputControl.isInputAction(InputType.BTN5)) {
+			this.changeStateInfo();
+		}
+
     var textui = root.queryTextUI('default_window');
     var color = textui.getColor();
     var font = textui.getFont();
 
-    var state = this._state;
+    var state = this._stateArr[this._stateArrIndex];
     var handle = state.getIconResourceHandle();
     var iconWidth = GraphicsFormat.ICON_WIDTH + 5;
     var iconHeight = GraphicsFormat.ICON_HEIGHT + 5;
+
+    if (this._stateArr.length > 1) {
+      //表示するステートが複数の場合、切替可能の表示
+      var pic  = root.queryTextUI('single_window').getUIImage();
+      var changeAbleText = 'ページ[' + (this._stateArrIndex + 1) + '/' + this._stateArr.length + ']   ※Aキーで切替';
+      WindowRenderer.drawStretchWindow(x - this.getWindowXPadding(), y - 30, this.getWindowWidth(), 25, pic);
+      TextRenderer.drawKeywordText(x, y - 30, changeAbleText, -1, ColorValue.KEYWORD, font);
+    }
 
     //アイコン＋ステート名を表示
     GraphicsRenderer.drawImage(x, y, handle, GraphicsType.ICON);
@@ -372,6 +369,7 @@ var ItemStateInfoWindow = defineObject(BaseWindow,
   
   setInfoItem: function(item) {
     this._item = item;
+    this._stateArr = [];
     this.enableWindow(false);
 
     if (item === null) {
@@ -380,25 +378,50 @@ var ItemStateInfoWindow = defineObject(BaseWindow,
 
     //ステートを付加する武器の場合
     if (item.isWeapon() === true) {
-      this._state = item.getStateInvocation().getState();
-      if (this._state) {
-        this._infotext = this._state.getDescription();
+      this._stateArr.push(item.getStateInvocation().getState());
+      
+      if (this._stateArrIndex >= this._stateArr.length) {
+        this._stateArrIndex = this._stateArr.length - 1;
+      }
+      if (this._stateArr[this._stateArrIndex]) {
+        this._infotext = this._stateArr[this._stateArrIndex].getDescription();
         this.enableWindow(true);
         return;
       }
     }
 
-    //ステート付加アイテムの場合
     if (item.isWeapon() === false) {
+      //ステート付加アイテムの場合
       var stateInfo = item.getStateInfo();
       if (stateInfo) {
-        this._state = stateInfo.getStateInvocation().getState();
-        if (this._state) {
-          this._infotext = this._state.getDescription();
+        this._stateArr.push(stateInfo.getStateInvocation().getState());
+
+        if (this._stateArrIndex >= this._stateArr.length) {
+          this._stateArrIndex = this._stateArr.length - 1;
+        }
+        if (this._stateArr[this._stateArrIndex]) {
+          this._infotext = this._stateArr[this._stateArrIndex].getDescription();
           this.enableWindow(true);
           return;
         }
       }
+
+      //範囲攻撃アイテムの場合
+      if (item.getItemType() === ItemType.CUSTOM && item.getCustomKeyword() === 'OT_ItemEffectRange') {
+        var tmpStateArr = OT_getCustomItemAddState(item);
+        if (tmpStateArr.length > 0) {
+          for (var i = 0; i < tmpStateArr.length; i++) {
+            this._stateArr.push(tmpStateArr[i][0]);
+          }
+
+          if (this._stateArrIndex >= this._stateArr.length) {
+            this._stateArrIndex = this._stateArr.length - 1;
+          }    
+          this._infotext = this._stateArr[this._stateArrIndex].getDescription();
+          this.enableWindow(true);
+          return;
+      }
+      }  
     }
   },
 
@@ -436,6 +459,19 @@ var ItemStateInfoWindow = defineObject(BaseWindow,
 
     //どの方向でも表示不可の場合、window自体表示しない
     this.enableWindow(false);
+  },
+
+  //Stateが複数存在する場合の切替え処理
+  changeStateInfo: function() {
+    if (this._stateArr.length > 1) {
+      this._stateArrIndex++;
+      if (this._stateArrIndex >= this._stateArr.length) {
+        this._stateArrIndex = 0;
+      }
+
+      this._infotext = this._stateArr[this._stateArrIndex].getDescription();
+      MediaControl.soundDirect('menutargetchange');
+    }
   }
 });
 
