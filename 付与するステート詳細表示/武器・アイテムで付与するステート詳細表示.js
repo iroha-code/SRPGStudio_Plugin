@@ -45,6 +45,10 @@ var alias02 = WeaponSelectMenu.moveWindowManager;
 WeaponSelectMenu.moveWindowManager = function() {
   var result = alias02.call(this);
 
+  if (!this._itemStateInfoWindow) {
+    return result;
+  }
+
   if (this._itemInfoWindow._isWindowEnabled) {
     this._itemStateInfoWindow.setInfoItem(this._itemListWindow.getCurrentItem());
 
@@ -60,6 +64,10 @@ WeaponSelectMenu.moveWindowManager = function() {
 var alias03 = WeaponSelectMenu.drawWindowManager;
 WeaponSelectMenu.drawWindowManager = function() {
   alias03.call(this);
+
+  if (!this._itemStateInfoWindow) {
+    return;    
+  }
 
   this._itemStateInfoWindow.drawWindow(this._itemStateInfoWindow._x, this._itemStateInfoWindow._y);
 }
