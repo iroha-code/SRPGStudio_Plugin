@@ -6,6 +6,7 @@
 
   ■バージョン履歴
   2022/03/26 新規作成
+  2022/04/03 スキルを所持していないユニットのユニットウインドウを開くとゲームが止まるバグを修正
 
   ■対応バージョン
   SRPG Studio Version:1.225
@@ -39,7 +40,9 @@ UnitMenuBottomWindow.moveWindowContent = function() {
   var result = alias02.call(this);
 
   var skillEntry = this._skillInteraction._scrollbar.getObject();
-  this._skillStateInfoWindow.setSkillInfoData(skillEntry.skill, skillEntry.objecttype);
+  if (skillEntry) {
+    this._skillStateInfoWindow.setSkillInfoData(skillEntry.skill, skillEntry.objecttype);
+  }
 
   return result;
 }
