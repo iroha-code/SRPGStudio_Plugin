@@ -10,6 +10,7 @@
   ※本プラグインの作成者は彩羽です。本プラグインについてo-to様への問い合わせは避けてください。
 
   ■バージョン履歴
+  2022/04/12 他プラグインとの競合対策を追加
   2022/03/27 o-to様の「範囲攻撃アイテム」プラグインの付与ステートも表示するよう修正
   2022/03/25 変数宣言ができていなかったのを修正・その他微修正
   2022/03/25 新規作成
@@ -45,11 +46,7 @@ var alias02 = WeaponSelectMenu.moveWindowManager;
 WeaponSelectMenu.moveWindowManager = function() {
   var result = alias02.call(this);
 
-  if (!this._itemStateInfoWindow) {
-    return result;
-  }
-
-  if (this._itemInfoWindow._isWindowEnabled) {
+  if (this._itemInfoWindow._isWindowEnabled && this._itemStateInfoWindow) {
     this._itemStateInfoWindow.setInfoItem(this._itemListWindow.getCurrentItem());
 
     //上方向以外 表示可能
@@ -65,11 +62,9 @@ var alias03 = WeaponSelectMenu.drawWindowManager;
 WeaponSelectMenu.drawWindowManager = function() {
   alias03.call(this);
 
-  if (!this._itemStateInfoWindow) {
-    return;    
+  if (this._itemStateInfoWindow) {
+    this._itemStateInfoWindow.drawWindow(this._itemStateInfoWindow._x, this._itemStateInfoWindow._y);
   }
-
-  this._itemStateInfoWindow.drawWindow(this._itemStateInfoWindow._x, this._itemStateInfoWindow._y);
 }
 
 // --------------------------------------------------
@@ -88,7 +83,7 @@ var alias12 = WandSelectMenu.moveWindowManager;
 WandSelectMenu.moveWindowManager = function() {
   var result = alias12.call(this);
 
-  if (this._itemInfoWindow._isWindowEnabled) {
+  if (this._itemInfoWindow._isWindowEnabled && this._itemStateInfoWindow) {
     this._itemStateInfoWindow.setInfoItem(this._itemListWindow.getCurrentItem());
 
     //上方向以外 表示可能
@@ -104,7 +99,9 @@ var alias13 = WandSelectMenu.drawWindowManager;
 WandSelectMenu.drawWindowManager = function() {
   alias13.call(this);
 
-  this._itemStateInfoWindow.drawWindow(this._itemStateInfoWindow._x, this._itemStateInfoWindow._y);
+  if (this._itemStateInfoWindow) {
+    this._itemStateInfoWindow.drawWindow(this._itemStateInfoWindow._x, this._itemStateInfoWindow._y);
+  }
 }
 // --------------------------------------------------
 // ItemSelectMenu にItemStateInfoWindowを追加
@@ -122,7 +119,7 @@ var alias22 = ItemSelectMenu.moveWindowManager;
 ItemSelectMenu.moveWindowManager = function() {
   var result = alias22.call(this);
 
-  if (this._itemInfoWindow._isWindowEnabled) {
+  if (this._itemInfoWindow._isWindowEnabled && this._itemStateInfoWindow) {
     this._itemStateInfoWindow.setInfoItem(this._itemListWindow.getCurrentItem());
 
     //上方向以外 表示可能
@@ -138,7 +135,9 @@ var alias23 = ItemSelectMenu.drawWindowManager;
 ItemSelectMenu.drawWindowManager = function() {
   alias23.call(this);
 
-  this._itemStateInfoWindow.drawWindow(this._itemStateInfoWindow._x, this._itemStateInfoWindow._y);
+  if (this._itemStateInfoWindow) {
+    this._itemStateInfoWindow.drawWindow(this._itemStateInfoWindow._x, this._itemStateInfoWindow._y);
+  }
 }
 
 // --------------------------------------------------
@@ -157,7 +156,9 @@ var alias32 = UnitMenuBottomWindow.moveWindowContent;
 UnitMenuBottomWindow.moveWindowContent = function() {
   var result = alias32.call(this);
 
-  this._itemStateInfoWindow.setInfoItem(this._itemInteraction._window.getInfoItem());
+  if (this._itemStateInfoWindow) {
+    this._itemStateInfoWindow.setInfoItem(this._itemInteraction._window.getInfoItem());
+  }
 
   return result;
 }
@@ -166,9 +167,8 @@ var alias33 = UnitMenuBottomWindow._drawInfoWindow;
 UnitMenuBottomWindow._drawInfoWindow = function(xBase, yBase) {
   alias33.call(this, xBase, yBase);
 
-  if (this._isTracingLocked) {
-    return;
-  }
+  if (!this._itemStateInfoWindow) return;
+  if (this._isTracingLocked) return;
 
   var help = this._getActiveUnitMenuHelp();
   var x = xBase + ItemRenderer.getItemWidth();
@@ -198,7 +198,9 @@ ShopLayoutScreen._prepareScreenMemberData = function(screenParam) {
 
 var alias42 = ShopLayoutScreen._processMode;
 ShopLayoutScreen._processMode = function(mode) {
-  this._itemStateInfoWindow.setInfoItem(this._itemInfoWindow.getInfoItem());
+  if (this._itemStateInfoWindow) {
+    this._itemStateInfoWindow.setInfoItem(this._itemInfoWindow.getInfoItem());
+  }
 
   alias42.call(this, mode);
 }
@@ -207,12 +209,16 @@ var alias43 = ShopLayoutScreen.notifyInfoItem;
 ShopLayoutScreen.notifyInfoItem = function(item) {
   alias43.call(this, item);
 
-  this._itemStateInfoWindow.setInfoItem(item);
+  if (this._itemStateInfoWindow) {
+    this._itemStateInfoWindow.setInfoItem(item);
+  }
 }
 
 var alias44 = ShopLayoutScreen.drawScreenCycle;
 ShopLayoutScreen.drawScreenCycle = function() {
   alias44.call(this);
+
+  if (!this._itemStateInfoWindow) return;
 
   var x = LayoutControl.getCenterX(-1, this._getTopWindowWidth()) + this._activeItemWindow.getWindowWidth();
   var y = LayoutControl.getCenterY(-1, this._getTopWindowHeight()) + this._keeperWindow.getWindowHeight();
@@ -232,7 +238,7 @@ var alias51 = BonusLayoutScreen._prepareScreenMemberData;
 BonusLayoutScreen._prepareScreenMemberData = function(screenParam) {
   alias51.call(this, screenParam);
 
-  this._itemStateInfoWindow = createWindowObject(ItemStateInfoWindow, this); 
+  this._itemStateInfoWindow = createWindowObject(ItemStateInfoWindow, this);
 }
 
 // --------------------------------------------------
@@ -251,7 +257,7 @@ var alias62 = DurabilitySelectManager.moveWindowManager;
 DurabilitySelectManager.moveWindowManager = function() {
   var result = alias62.call(this);
 
-  if (this._itemInfoWindow._isWindowEnabled) {
+  if (this._itemInfoWindow._isWindowEnabled && this._itemStateInfoWindow) {
     this._itemStateInfoWindow.setInfoItem(this._itemListWindow.getCurrentItem());
 
     //上方向以外 表示可能
@@ -267,7 +273,9 @@ var alias63 = DurabilitySelectManager.drawWindowManager;
 DurabilitySelectManager.drawWindowManager = function() {
   alias63.call(this);
 
-  this._itemStateInfoWindow.drawWindow(this._itemStateInfoWindow._x, this._itemStateInfoWindow._y);
+  if (this._itemStateInfoWindow) {
+    this._itemStateInfoWindow.drawWindow(this._itemStateInfoWindow._x, this._itemStateInfoWindow._y);
+  }
 }
 
 // --------------------------------------------------
@@ -286,7 +294,9 @@ var alias72 = StockItemTradeScreen.moveScreenCycle;
 StockItemTradeScreen.moveScreenCycle = function() {
   var result = alias72.call(this);
 
-  this._itemStateInfoWindow.setInfoItem(this._itemInfoWindow.getInfoItem());
+  if (this._itemStateInfoWindow) {
+    this._itemStateInfoWindow.setInfoItem(this._itemInfoWindow.getInfoItem());
+  }
 
   return result;
 }
@@ -294,6 +304,8 @@ StockItemTradeScreen.moveScreenCycle = function() {
 var alias73 = StockItemTradeScreen.drawScreenCycle;
 StockItemTradeScreen.drawScreenCycle = function() {
   alias73.call(this);
+
+  if (!this._itemStateInfoWindow) return;
 
   var width = this._unitItemWindow.getWindowWidth() + this._stockItemWindow.getWindowWidth();
   var unitWindowWidth = this._unitItemWindow.getWindowWidth();
