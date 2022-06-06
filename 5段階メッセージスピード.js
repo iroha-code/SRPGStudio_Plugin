@@ -31,7 +31,7 @@ StringTable.Speed_LittleLow = 'やや\n遅い';
 // 環境画面の表示
 //--------------------------------
 ConfigItem.MessageSpeed.getObjectArray = function() {
-		return [StringTable.Speed_High, StringTable.Speed_LittleHigh, StringTable.Speed_Normal, StringTable.Speed_LittleLow, StringTable.Speed_Low];
+  return [StringTable.Speed_High, StringTable.Speed_LittleHigh, StringTable.Speed_Normal, StringTable.Speed_LittleLow, StringTable.Speed_Low];
 }
 
 ConfigItem.MessageSpeed.getFlagCount = function() {
