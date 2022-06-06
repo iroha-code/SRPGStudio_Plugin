@@ -24,8 +24,8 @@
 //--------------------------------
 SpeedType.LITTLE_HIGH = 6;
 SpeedType.LITTLE_LOW = 7;
-StringTable.Speed_LittleHigh = 'やや\n速い';
-StringTable.Speed_LittleLow = 'やや\n遅い';
+StringTable.Speed_LittleHigh = 'やや\n高速';
+StringTable.Speed_LittleLow = 'やや\n低速';
 
 //--------------------------------
 // 環境画面の表示
