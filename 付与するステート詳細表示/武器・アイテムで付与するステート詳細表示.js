@@ -10,6 +10,7 @@
   ※本プラグインの作成者は彩羽です。本プラグインについてo-to様への問い合わせは避けてください。
 
   ■バージョン履歴
+  2022/06/08 ユニットメニューで画面下の説明文に被らないよう位置調整
   2022/04/12 他プラグインとの競合対策を追加
   2022/03/27 o-to様の「範囲攻撃アイテム」プラグインの付与ステートも表示するよう修正
   2022/03/25 変数宣言ができていなかったのを修正・その他微修正
@@ -165,14 +166,19 @@ UnitMenuBottomWindow.moveWindowContent = function() {
 
 var alias33 = UnitMenuBottomWindow._drawInfoWindow;
 UnitMenuBottomWindow._drawInfoWindow = function(xBase, yBase) {
-  alias33.call(this, xBase, yBase);
-
   if (!this._itemStateInfoWindow) return;
   if (this._isTracingLocked) return;
 
   var help = this._getActiveUnitMenuHelp();
   var x = xBase + ItemRenderer.getItemWidth();
   if (help === UnitMenuHelp.ITEM) {
+    //20220608修正
+    //画面下の説明文のぶんのスペース（60px）を空ける
+    var totalWindowHeight = this._itemInteraction.getInteractionWindow().getWindowHeight() + this._itemStateInfoWindow.getWindowHeight();
+    if (yBase + totalWindowHeight + 60 > root.getGameAreaHeight()) {
+      yBase -= yBase + totalWindowHeight + 60 - root.getGameAreaHeight();
+    }
+
     if (x + this._itemInteraction.getInteractionWindow().getWindowWidth() > root.getGameAreaWidth()) {
       x -= x + this._itemInteraction.getInteractionWindow().getWindowWidth() - root.getGameAreaWidth();
       x -= 8;
@@ -182,6 +188,8 @@ UnitMenuBottomWindow._drawInfoWindow = function(xBase, yBase) {
     this._itemStateInfoWindow.setWindowDirection(x, yBase, this._itemInteraction.getInteractionWindow().getWindowWidth(), this._itemInteraction.getInteractionWindow().getWindowHeight(), false, true, false, true);  
     this._itemStateInfoWindow.drawWindow(this._itemStateInfoWindow._x, this._itemStateInfoWindow._y);
   }
+
+  alias33.call(this, xBase, yBase);
 }
 
 // --------------------------------------------------
