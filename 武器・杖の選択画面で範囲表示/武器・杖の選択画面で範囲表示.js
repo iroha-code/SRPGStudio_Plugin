@@ -11,8 +11,9 @@
   var WAND_WAVEPANEL_DISPLAY = true;  → 杖の効果範囲を表示する
   var WAND_WAVEPANEL_DISPLAY = false; → 杖の効果範囲を表示しない
 
-  なお，杖の効果範囲も使用する場合は，同梱の「WandRange」フォルダを「Material」フォルダに格納してください。
-  ※ Material > WandRange > WandRange.png というフォルダ構成になっていればOK
+  なお，杖の効果範囲も使用する場合は，同梱の「WandRange.png」のファイルを
+    Material > WandRange > WandRange.png
+  というフォルダ構成になるように格納してください。
   ※ WandRange.png は名前未定様のプラグイン同梱画像を流用させていただいたものです。
 
   ■オプション2
@@ -24,6 +25,9 @@
   ■バージョン履歴
   2021/09/24  新規作成
   2021/10/20  杖の使用範囲も表示できるよう更新
+  2022/07/25  RESULTWINDOW_WAVEPANEL_DISPLAY = true かつ
+              ゲームオプションの「武器を1つしか持たない場合は攻撃時に武器選択しない」
+              にチェックが入った状態でエラーが出ていたのを修正
 
   ■対応バージョン
   SRPG Studio Version:1.244
@@ -86,14 +90,16 @@ var alias04 = UnitCommand.Attack._moveSelection;
 UnitCommand.Attack._moveSelection = function() {
   if (RESULTWINDOW_WAVEPANEL_DISPLAY) {
     var unit = this.getCommandTarget();
-    var weapon = this._weaponSelectMenu.getSelectWeapon();
+    if (this._weaponSelectMenu._itemListWindow) {
+      var weapon = this._weaponSelectMenu.getSelectWeapon();
+    
+      if (!this._tmpweapon || this._tmpweapon !== weapon) {
+        this._indexArray = IndexArray.createIndexArray(unit.getMapX(), unit.getMapY(), weapon);
+      }
   
-    if (!this._tmpweapon || this._tmpweapon !== weapon) {
-      this._indexArray = IndexArray.createIndexArray(unit.getMapX(), unit.getMapY(), weapon);
+      this._tmpweapon = weapon;
+      this._wavePanel.moveWavePanel();  
     }
-
-    this._tmpweapon = weapon;
-    this._wavePanel.moveWavePanel();
   }
 
   return alias04.call(this);  
