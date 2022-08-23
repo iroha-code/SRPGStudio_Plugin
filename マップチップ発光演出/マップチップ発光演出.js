@@ -61,7 +61,7 @@ var CANDLE_TERRAIN_GROUP_ID = -1; //地形グループに対して明滅を適�
 // マップチップアニメ（燭台の火が大きくなったり小さくなったり…など）を考慮するか
 // trueの場合、14フレームごとにマップチップの描画を更新します。
 // falseにするとマップチップの更新を行わなくなるため、動作が軽くなります。
-var MAPCHIP_ANIMATION_ISACTIVATED = false;
+var MAPCHIP_ANIMATION_ISACTIVATED = true;
 	
 // ---------------------------------------
 // CurrentMapクラス
