@@ -29,6 +29,7 @@
 
 	■バージョン履歴
 	2022/08/23  新規作成
+	2022/08/24  拠点に入ったときエラーが出てしまうバグを修正
 
 	■対応バージョン
 	SRPG Studio Version:1.265
@@ -70,8 +71,10 @@ var alias1 = CurrentMap.prepareMap;
 CurrentMap.prepareMap = function() {
 	alias1.call(this);
 	
-	CandleComposition.initialize();
-	CandleComposition.setupAlphaCounter();
+	if (root.getCurrentScene() !== SceneType.REST) {
+		CandleComposition.initialize();
+		CandleComposition.setupAlphaCounter();	
+	}
 };
 
 // ---------------------------------------
@@ -255,7 +258,7 @@ var CandleComposition = {
 		return cache;
 	},
 	
-	_getOverlayCache: function(x, y) {
+	_getOverlayCache: function() {
 		var graphicsManager = root.getGraphicsManager();
 		var mapData = root.getCurrentSession().getCurrentMapInfo();
 		var mapwidth = mapData.getMapWidth() * GraphicsFormat.MAPCHIP_WIDTH;
