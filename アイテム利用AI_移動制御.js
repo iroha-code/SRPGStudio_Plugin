@@ -77,7 +77,7 @@ CombinationSelectorEx.getEstimateCombinationIndex = function(unit, combinationAr
 		combination = combinationArray[i];
 
 		//処理追加 ----------------------------
-		if (combination.item.custom.rush == true) {
+		if (combination.item && combination.item.custom.rush == true) {
 			continue;
 		}
 		//------------------------------------
