@@ -13,6 +13,37 @@
 ■詳しい使い方
 　01_立ち絵キャラクリエイト_データ集.js を参照してください。
 
+■表情IDごとの指定パーツ強制上書き機能について
+　ユニットのカスタムパラメータに以下のように記述することで、
+　クリエイトした立ち絵データのパーツを無視して、強制的に上書きすることができます。
+
+(例) 表情が「微笑み」のときは「目→微笑む目.png」「口→にっこり.png」で上書き
+     表情が「怒り」のときは「目→怒りの目.png」で上書き
+     
+{
+  charaExpressionOverwrite:
+  [
+    {
+      expressionId: 1, //微笑み
+      overWrite:
+      [
+        {categoryName: '目', picName: '微笑む目.png'},
+        {categoryName: '口', picName: 'にっこり.png'}
+      ]
+    },
+    {
+      expressionId: 7, //怒り
+      overWrite:
+      [
+        {categoryName: '目', picName: '怒りの目.png'}
+      ]
+    }
+  ]
+}
+
+※expressionIdは、「立ち絵画像 → 表情の編集」に対応しています。
+　「通常」=0、「微笑む」=1、「キメ顔」=2、… といった具合です。
+
 ■注意点
 　① 立ち絵のサイズには規格が存在しないため、導入する立ち絵のサイズやゲームサイズによっては、
 　　レイアウトが不自然になる可能性があります。
@@ -24,6 +55,7 @@
 　　そのメソッドにも加筆する必要があることにご注意ください。
 
 ■バージョン履歴
+　2023/01/20  表情IDごとに指定パーツを強制上書きする機能を追加
 　2023/01/19  新規作成
 
 ■対応バージョン
@@ -492,6 +524,22 @@ BaseMessageView._setupIllustImage = function(messageViewParam) {
 		var indexArr = unit.custom.charaIndexArr;
 		for (var i = 0; i < CHARACTER_CREATE_MATERIAL_ARRAY.length; i++) {
 			this._picArr.push(getCharaIllustMaterialPic(i, indexArr[i]));
+		}
+
+		// さらに、上書き用のデータがある場合は実行
+		if (unit.custom.charaExpressionOverwrite) {
+			var charaExpressionOverwrite = unit.custom.charaExpressionOverwrite;
+			for (var j = 0; j < charaExpressionOverwrite.length; j++) {
+				var id = charaExpressionOverwrite[j].expressionId;
+				if (id === this._illustId) {
+					var overWriteArr = charaExpressionOverwrite[j].overWrite;
+					for (var k = 0; k < overWriteArr.length; k++) {
+						var overWriteObj = overWriteArr[k];
+						var index = CHARACTER_CREATE_MATERIAL_ARRAY.indexOf(overWriteObj.categoryName);
+						this._picArr[index] = root.getMaterialManager().createImage(overWriteObj.categoryName, overWriteObj.picName);
+					}
+				}
+			}
 		}
 	}
 
