@@ -119,23 +119,25 @@ UnitCommand.Attack._moveSelection = function() {
 		if (this._isWeaponSelectDisabled) {
 			return MoveResult.END;
 		}
-		
+
 		this._weaponSelectMenu.setMenuTarget(this.getCommandTarget());
 		this.changeCycleMode(AttackCommandMode.TOP);
 	} else if (result === PosSelectorResult.WEAPONCHANGE) {
 		// 新設する処理。装備武器を変更する
 		// 直前の武器選択画面に出てくるScrollbarで，1つ後の武器を参照する。
 		// もし最後の武器だった場合は，1番目の武器に戻る。
-		var index = this._weaponSelectMenu._itemListWindow.getItemIndex();
-		this._weaponSelectMenu._itemListWindow.setItemIndex(index + 1);
-		var weapon = this._weaponSelectMenu.getSelectWeapon();
-
-		if (!weapon) {
-			this._weaponSelectMenu._itemListWindow.setItemIndex(0);
+		if (!this._isWeaponSelectDisabled) {
+			var index = this._weaponSelectMenu._itemListWindow.getItemIndex();
+			this._weaponSelectMenu._itemListWindow.setItemIndex(index + 1);
 			var weapon = this._weaponSelectMenu.getSelectWeapon();
-		}
 
-		this._startSelection(weapon);
+			if (!weapon) {
+				this._weaponSelectMenu._itemListWindow.setItemIndex(0);
+				var weapon = this._weaponSelectMenu.getSelectWeapon();
+			}
+		
+			this._startSelection(weapon);
+		}
 	}
 	
 	return MoveResult.CONTINUE;
