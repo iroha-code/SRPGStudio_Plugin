@@ -78,7 +78,7 @@ var alias02 = ScriptCall_AppearEventUnit;
 ScriptCall_AppearEventUnit = function(unit) {
 	alias02.call(this, unit);
 
-	if (unit.getUnitType() === UnitType.ENEMY) {
+	if (unit && unit.getUnitType() === UnitType.ENEMY) {
 		ModifyEnemyStatusForDifficulty(unit);
 	}
 };
