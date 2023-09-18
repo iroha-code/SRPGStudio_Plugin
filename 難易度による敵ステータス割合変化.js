@@ -87,7 +87,7 @@ ScriptCall_AppearEventUnit = function(unit) {
 var alias03 = ReinforcementChecker._appearUnit;
 ReinforcementChecker._appearUnit = function(pageData, x, y) {
 	var unit = alias03.call(this, pageData, x, y);
-	if (unit.getUnitType() === UnitType.ENEMY) {
+	if (unit && unit.getUnitType() === UnitType.ENEMY) {
 		ModifyEnemyStatusForDifficulty(unit);
 	}
 
