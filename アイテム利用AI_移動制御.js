@@ -1,32 +1,34 @@
 /*--------------------------------------------------------------------------
 
-  アイテム利用AI_移動制御
+アイテム利用AI_移動制御
 
-  敵がアイテムを使用するとき，以下のように移動を制御できるようにします。
-   ① 味方に接近しながらアイテムを使用する
-   ② その場にとどまってアイテムを使用する
-　
-  ■概要
-  ① 武器のカスタムパラメータに {rush : true} が設定してある場合，
-    敵が味方に接近しながらアイテムを使用するようになります。
-  ② 武器のカスタムパラメータに {stay : true} が設定してある場合，
-    敵がその場にとどまってアイテムを使用するようになります。
-  ※デフォルトの挙動では，MapIndexが最小となる座標（上または左）に移動するようです。
+敵がアイテムを使用するとき，以下のように移動を制御できるようにします。
+① 味方に接近しながらアイテムを使用する
+② その場にとどまってアイテムを使用する
 
-  ■バージョン履歴
-  2021/04/04  新規作成
+■概要
+① アイテムのカスタムパラメータに {rush : true} が設定してある場合，
+敵が味方に接近しながらアイテムを使用するようになります。
+※手持ち武器を装備した場合と同じ経路を辿って移動します。
+② アイテムのカスタムパラメータに {stay : true} が設定してある場合，
+敵がその場にとどまってアイテムを使用するようになります。
+※デフォルトの挙動では，MapIndexが最小となる座標（上または左）に移動するようです。
 
-　■対応バージョン
-　SRPG Studio Version:1.225
-  
-  ■規約
-  ・利用はSRPG Studioを使ったゲームに限ります。
-  ・商用・非商用問いません。フリーです。
-  ・加工等、問題ありません。どんどん改造してください。
-  ・クレジット明記無し　OK
-  ・再配布、転載　OK
-  ・SRPG Studio利用規約は遵守してください。
-  
+■バージョン履歴
+2024/02/02  武器の使用を禁止した場合も接近するように修正
+2021/04/04  新規作成
+
+■対応バージョン
+SRPG Studio Version:1.225
+
+■規約
+・利用はSRPG Studioを使ったゲームに限ります。
+・商用・非商用問いません。フリーです。
+・加工等、問題ありません。どんどん改造してください。
+・クレジット明記無し　OK
+・再配布、転載　OK
+・SRPG Studio利用規約は遵守してください。
+
 --------------------------------------------------------------------------*/
 
 (function() {
@@ -46,7 +48,7 @@ AutoActionBuilder.buildApproachAction = function(unit, autoActionArray) {
 				// 現在位置では攻撃可能な相手がいないため、どの敵を狙うべきかを取得する
 				combinationtmp = CombinationManager.getEstimateCombination(unit);
 				if (combinationtmp !== null) {
-//					root.log(unit.getName() + ' rushアイテム使用');
+					// root.log(unit.getName() + ' rushアイテム使用');
 					combination.cource = combinationtmp.cource;
 					this._pushGeneral(unit, autoActionArray, combination);
 					
@@ -104,5 +106,35 @@ CombinationSelectorEx.getEstimateCombinationIndex = function(unit, combinationAr
 	
 	return index;
 }
+
+CombinationCollector.Weapon.collectCombination = function(misc) {
+	var i, weapon, filter, rangeMetrics;
+	var unit = misc.unit;
+	var itemCount = UnitItemControl.getPossessionItemCount(unit);
+	
+	for (i = 0; i < itemCount; i++) {
+		weapon = UnitItemControl.getItem(unit, i);
+		if (weapon === null) {
+			continue;
+		}
+		
+		// 武器でない場合は続行しない
+		// 武器を装備できない場合においても、経路計算においては考慮しない
+		if (!weapon.isWeapon()) {
+			continue;
+		}
+		
+		misc.item = weapon;
+		
+		rangeMetrics = StructureBuilder.buildRangeMetrics();
+		rangeMetrics.startRange = weapon.getStartRange();
+		rangeMetrics.endRange = weapon.getEndRange();
+		
+		filter = this._getWeaponFilter(unit);
+		this._checkSimulator(misc);
+		this._setUnitRangeCombination(misc, filter, rangeMetrics);
+	}
+}
+
 
 })();
