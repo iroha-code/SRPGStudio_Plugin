@@ -34,10 +34,9 @@
 
 (function() {
 
-var alias = AutoActionBuilder.buildApproachAction;
+var alias01 = AutoActionBuilder.buildApproachAction;
 AutoActionBuilder.buildApproachAction = function(unit, autoActionArray) {
 	var combination;
-	var combinationtmp;
 	
 	// 現在位置から攻撃可能なユニットの中で、最も優れた組み合わせを取得する
 	combination = CombinationManager.getApproachCombination(unit, true);
@@ -53,12 +52,12 @@ AutoActionBuilder.buildApproachAction = function(unit, autoActionArray) {
 			}
 		}
 	}
-	return alias.call(this, unit, autoActionArray);
+	return alias01.call(this, unit, autoActionArray);
 }
 
+var alias02 = CombinationSelector._configureScorerSecond;
 CombinationSelector._configureScorerSecond = function(groupArray) {
-	groupArray.appendObject(AIScorer.Counterattack);
-	groupArray.appendObject(AIScorer.Avoid);
+	alias02.call(this, groupArray);
 	groupArray.appendObject(AIScorer.ItemAdditional); //新規追加
 }
 
